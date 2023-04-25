@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider preact build",
+    "build": "cross-env preact build",
     "serve": "sirv build --port 8080 --cors --single",
     "dev": "cross-env NODE_OPTIONS=--openssl-legacy-provider preact watch -p 8082",
     "lint": "eslint src",

@@ -5,7 +5,7 @@ export const gpt3Key = persistentSignal("gptkey.gpt3Key", "");
 export const gpt4Key = persistentSignal("gptkey.gpt4Key", "");
 
 export const hasKey = () => {
-  return !!(gpt3Key.value);
+  return !!gpt3Key.value;
 };
 
 export const ShowKeyMessage = () => {
