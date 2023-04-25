@@ -1,6 +1,6 @@
 import { createContext } from "preact";
 
-export const ReturnResult = createContext((value) => { throw new Exception("No provider") });
+export const ReturnResult = createContext((value) => { throw new Error("No provider") });
 
 export function getResult(containerSignal, component) {
   return new Promise((resolve, reject) => {

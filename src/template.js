@@ -136,7 +136,6 @@ export function dedent(template) {
   }
   const result = lines
     .map((line) => line.slice(indent))
-    .join("\n")
-    .trim();
+    .join("\n");
   return firstLine + "\n" + result;
 }

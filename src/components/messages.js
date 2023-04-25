@@ -27,6 +27,18 @@ export const Messages = ({ messages }) => {
     {list.map((message, i) => {
       return <div ref={i === list.length - 1 ? lastMessageRef : null} class={message.role === userRole ? userClass : otherClass}>
         <Markdown text={message.content || "..."} />
+        {message.annotations && <MessageAnnotation annotations={message.annotations} />}
+      </div>
+    })}
+  </div>;
+};
+
+const MessageAnnotation = ({ annotations }) => {
+  return <div>
+    {annotations.map((annotation) => {
+      return <div class="text-xs text-gray-500">
+        <div class="font-semibold">{annotation.tag}</div>
+        <Markdown text={annotation.content} />
       </div>
     })}
   </div>;

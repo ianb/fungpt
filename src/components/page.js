@@ -4,6 +4,7 @@ import { useEffect, useRef } from "preact/hooks";
 import { gpt4Signal, temperatureSignal } from "../gpt";
 import { useState } from "preact/hooks";
 import { hashParamsSignal, updateHashParams } from "./hash";
+import { ErrorBoundary, ErrorCatcher } from "./errorboundary";
 
 export const Page = ({ title, start, children }) => {
   useEffect(() => {
@@ -19,14 +20,17 @@ export const Page = ({ title, start, children }) => {
   return (
     <div class="flex flex-col h-screen">
       <Header title={title} />
+      <ErrorCatcher />
       <main class="flex-1 flex overflow-auto bg-gray-300">
         {children.map((child) => {
           if (child.type === FullTabs || child.type === FullTabsWrapper) {
-            return child;
+            return <ErrorBoundary>{child}</ErrorBoundary>;
           } else {
-            return <div class={`w-1/3 bg-gray-100 p-4 overflow-auto m-2 rounded-lg shadow-xl`}>
-              {child}
-            </div>
+            return <ErrorBoundary>
+              <div class={`w-1/3 bg-gray-100 p-4 overflow-auto m-2 rounded-lg shadow-xl`}>
+                {child}
+              </div>
+            </ErrorBoundary>;
           }
         })}
         {freeChunks}
