@@ -16,7 +16,10 @@ I will not:
 * Prognosticate about the future and GPT's impact
 * Build on anxieties about being left behind
 * Worry about the inside of GPT
+* Talk about the LLM landscape
 * Discuss any libraries or frameworks
+* Do data science
+* Talk about myself
 
 ## GPT: a fun, tasty snack
 
@@ -33,6 +36,51 @@ curl https://api.openai.com/v1/chat/completions \
       {"role": "user", "content": "hi there!"}
     ]
   }'
+
+{"id":"chatcmpl-78C3O6lwev6lXWyoFdgYQ0ZtbHFna","object":"chat.completion","created":1682187314,"model":"gpt-3.5-turbo-0301","usage":{"prompt_tokens":19,"completion_tokens":9,"total_tokens":28},"choices":[{"message":{"role":"assistant","content":"Hello. How can I assist you today?"},"finish_reason":"stop","index":0}]}
+```
+
+## GPT: a fun, tasty snack
+
+```json
+{
+  "id": "chatcmpl-78C3O6lwev6lXWyoFdgYQ0ZtbHFna",
+  "object": "chat.completion",
+  "created": 1682187314,
+  "model": "gpt-3.5-turbo-0301",
+  "usage": {
+    "prompt_tokens": 19,
+    "completion_tokens": 9,
+    "total_tokens": 28
+  },
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content":
+        "Hello. How can I assist you today?"
+      },
+      "finish_reason": "stop",
+      "index": 0
+    }]}
+```
+
+## GPT: a fun, tasty snack
+
+More to the point:
+
+```json
+{
+  "model": "gpt-3.5-turbo",
+  "messages": [
+    {"role": "system", "content": "be surly"},
+    {"role": "user", "content": "hi there!"}
+  ]
+}
+```
+
+```
+=> Hello. How may I assist you today?
 ```
 
 ## How GPT works (from the **outside**)
@@ -42,7 +90,7 @@ curl https://api.openai.com/v1/chat/completions \
 
 Input -> Output
 
-## So what's a prompt?
+## What's a prompt?
 
 Before the ChatGPT API: a prompt was *text to be completed*:
 
@@ -85,7 +133,7 @@ GPT is acting as an _instruction-following machine_ more than a completer.
 2. GPT does not know you
 3. GPT is not personalized
 4. GPT never learns
-5. The GPT API won't even use your prompts for training
+5. (The GPT API won't even use your prompts for training)
 
 ## Anatomy of a chat prompt
 
@@ -118,15 +166,21 @@ The request is one JSON object:
 
 The messages _do not_ have to represent an accurate history or any history at all
 
-The user doesn't have to write what goes in `{"role": "user", "content": "..."}`
+The user doesn't have to write what goes in here:
+
+```json
+{"messages": [
+  {"role": "user", "content": "ANYTHING YOU WANT"}
+]}
+```
 
 ## system vs user messages
 
-The `{"role": "system"}` message is _instructions from the system to ChatGPT_.
+The **`{"role": "system"}`** message is _instructions from the system to ChatGPT_.
 
-The `{"role": "user"}` message is _instructions from the user_.
+The **`{"role": "user"}`** message is _instructions from the user_.
 
-Closer to social cues than firm rules. "user" is more powerful and immediate!
+This is closer to social cues than firm rules. "user" is more powerful and immediate!<span class="text-red-800 font-bold">*</span>
 
 ```json
 {
@@ -145,6 +199,8 @@ Implementing the obvious
 
 ## The Playground
 
+Let's do it in the playground...
+
 https://platform.openai.com/playground?mode=chat
 
 ## Extending chat
@@ -161,7 +217,7 @@ Uncontrolled input from the user can lead to distraction or abuse. So: rewrite i
 
 Note the translation of the user prompt!
 
-## Put GPT on both sides
+## GPT plays both sides
 
 [/selfchat](http://localhost:8082/selfchat)
 
@@ -173,7 +229,7 @@ GPT 3.5 is:
 
 1. Publicly available to everyone
 2. Fast
-3. Much cheaper (10-30x, even 60x!)
+3. Much cheaper (15-30x, even 60x!)
 4. Pretty good!
 
 GPT 4 is:
@@ -182,6 +238,7 @@ GPT 4 is:
 2. More expensive
 3. Better at listening to _all_ your instructions
 4. Much better at math and logical reasoning
+5. Also pretty good!
 
 ## Algebra tutor
 
@@ -249,19 +306,22 @@ I DON'T EVEN KNOW WHY!
 
 Turning a character description into a chat prompt or an image prompt...
 
-## Parsing
-
-[/recipeparser](http://localhost:8082/recipeparser)
-
-([Example recipe](https://www.allrecipes.com/recipe/20144/banana-banana-bread/))
-
-You can have GPT generate natural language _then_ parse it!
+GPT can both _include_ and _ignore_ information.
 
 ## Using natural language as canonical data
 
 [/roleplaygame](http://localhost:8082/roleplaygame)
 
+[cityplayer...](http://localhost:8080/cityplayer/?name=city-of-veilvale-at-april-9-2023)
+
 ## Socially appropriate?
+
+```json
+{
+  isSociallyAcceptable: true/false, // Is it socially acceptable for me to do this?
+  ...
+}
+```
 
 **Without** asking if something is socially appropriate:
 
@@ -275,9 +335,21 @@ You can have GPT generate natural language _then_ parse it!
 
 ## Check back on the images
 
-...
+[back to discord](https://discord.com/channels/1068039110574473256/1087851515567407175)
 
-## Mult-step
+## Parsing
+
+[/recipeparser](http://localhost:8082/recipeparser)
+
+([Example recipe](https://www.allrecipes.com/recipe/20144/banana-banana-bread/))
+
+You can have GPT generate natural language _then_ parse it!
+
+## Slides
+
+<img class="mx-auto rounded" style="width: 75%" src="/assets/presentation/lets-make-slides.png" />
+
+## Multi-step
 
 [/slidemaker](http://localhost:8082/slidemaker)
 
@@ -297,4 +369,4 @@ I hope you all are part of making this technology real in the world.
 * https://ianbicking.org
 * https://hachyderm.io/@ianbicking
 * https://twitter.com/ianbicking
-* https://
+* https://github.com/ianb/fungpt

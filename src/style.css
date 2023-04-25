@@ -100,6 +100,10 @@ body {
 	margin-bottom: 0;
 }
 
+.unreset pre {
+	white-space: pre-wrap;
+}
+
 .unreset {
 	/**
  * Unreset CSS
@@ -378,7 +382,7 @@ body {
 	pre {
 		font-family: monospace;
 		margin: 1em 0;
-		white-space: pre;
+		/* white-space: pre; */
 	}
 
 	mark {
