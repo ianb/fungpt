@@ -3,9 +3,9 @@ import { onChange } from "../components/hash";
 
 // Code-splitting is automated for `routes` directory
 import Home from '../routes/home';
-import Chat from "../routes/chat";
-import Chat2 from "../routes/chat/chat2";
-import Chat3 from "../routes/chat/chat3";
+import SimpleChat from "../routes/chat/simple-chat";
+import EndingChat from "../routes/chat/ending-chat";
+import TranslateInputChat from "../routes/chat/translate-input-chat";
 import SelfChat from "../routes/selfchat";
 import TwentyQuestions from '../routes/twentyquestions';
 import AlgebraTutor from "../routes/algebratutor";
@@ -19,9 +19,9 @@ const App = () => {
 	return (
 		<Router onChange={onChange}>
 			<Home path="/" />
-			<Chat path="/chat/" />
-			<Chat2 path="/chat2/" />
-			<Chat3 path="/chat3/" />
+			<SimpleChat path="/chat/simple" />
+			<EndingChat path="/chat/ending" />
+			<TranslateInputChat path="/chat/translate-input" />
 			<SelfChat path="/selfchat/" />
 			<TwentyQuestions path="/twentyquestions/" />
 			<AlgebraTutor path="/algebratutor/" />

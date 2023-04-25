@@ -6,18 +6,24 @@ const Home = () => {
 		<Page title="FUN WITH GPT!">
 			<div>
 				<ul>
-					<li>
-						<A href="/chat">Chat</A>
-						{" | "} <A href="/chat2">Chat 2</A>
-						{" | "} <A href="/chat3">Chat 3</A>
+					<li>Chat:
+						<ol class="pl-4">
+							<li><A href="/chat/simple">Simple chat</A></li>
+							<li><A href="/chat/ending">Chat with ending</A></li>
+							<li><A href="/chat/translate-input">Chat that translates input</A></li>
+							<li><A href="/selfchat">Self-Chat: GPT vs GPT</A></li>
+						</ol>
 					</li>
-					<li><A href="/selfchat">Self-Chat</A></li>
-					<li><A href="/twentyquestions">Twenty Questions</A></li>
+					<li>Games:
+						<ol class="pl-4">
+							<li><A href="/twentyquestions">Twenty Questions</A></li>
+							<li><A href="/roleplaygame">Role Playing Game</A></li>
+						</ol>
+					</li>
 					<li><A href="/algebratutor">Algebra Tutor</A></li>
-					<li><A href="/roleplaygame">Role Play Game</A></li>
 					<li><A href="/recipeparser">Recipe Parser</A></li>
 					<li><A href="/slidemaker">Slide Maker</A></li>
-					<li><A href="/presentation">Presentation</A></li>
+					<li><A href="/presentation">Slides for a presentation about this</A></li>
 					<li><A href="/gptkey">Manage your GPT key</A></li>
 				</ul>
 			</div>

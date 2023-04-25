@@ -13,7 +13,7 @@ const messages = signal([]);
 const systemPrompt = persistentSignal("chat2.systemPrompt", "Respond like you are a very cool dude");
 const ChatInput = signal();
 
-const Chat2 = ({ }) => {
+const EndingChat = ({ }) => {
   return <NeedsKey>
     <Page title="Chat 2" start={chat}>
       <Messages messages={messages} />
@@ -26,7 +26,7 @@ const Chat2 = ({ }) => {
   </NeedsKey>;
 };
 
-export default Chat2;
+export default EndingChat;
 
 /**** LOGIC LOOP ****/
 
