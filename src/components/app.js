@@ -13,6 +13,7 @@ import RolePlayGame from "../routes/roleplaygame";
 import RecipeParser from "../routes/recipeparser";
 import SlideMaker from '../routes/slidemaker';
 import Presentation from '../routes/presentation';
+import GptKey from '../routes/gptkey';
 
 const App = () => {
 	return (
@@ -28,6 +29,7 @@ const App = () => {
 			<RecipeParser path="/recipeparser/" />
 			<SlideMaker path="/slidemaker/" />
 			<Presentation path="/presentation/" />
+			<GptKey path="/gptkey/" />
 		</Router>
 	);
 }

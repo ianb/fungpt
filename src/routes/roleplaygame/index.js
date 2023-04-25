@@ -8,6 +8,7 @@ import { useEffect } from "preact/hooks";
 import { Messages } from "../../components/messages";
 import { persistentSignal } from "../../persistentsignal";
 import { Markdown } from "../../markdown";
+import { NeedsKey } from "../../key";
 
 const gpt = new GPT();
 const initialWorldState = persistentSignal("rp-initialWorldState", "");
@@ -17,19 +18,18 @@ const WorldInput = signal();
 const history = persistentSignal("rp-history", []);
 
 const RolePlayGame = ({ }) => {
-  useEffect(() => {
-    rolePlayGame();
-  }, []);
-  return <Page title="Role Play Game">
-    <div>
-      <div class="bg-sky-300 p-2 m-2 rounded-lg">
-        <Markdown text={worldState.value} />
+  return <NeedsKey>
+    <Page title="Role Play Game" start={rolePlayGame}>
+      <div>
+        <div class="bg-sky-300 p-2 m-2 rounded-lg">
+          <Markdown text={worldState.value} />
+        </div>
+        <Messages messages={history} />
       </div>
-      <Messages messages={history} />
-    </div>
-    {WorldInput.value || <div>Loading...</div>}
-    <gpt.Log />
-  </Page>;
+      {WorldInput.value || <div>Loading...</div>}
+      <gpt.Log />
+    </Page>
+  </NeedsKey>;
 };
 
 export default RolePlayGame;

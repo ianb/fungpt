@@ -6,6 +6,7 @@ import { TextInput, TextArea, Button } from "../../components/input";
 import { Page } from "../../components/page";
 import { Messages } from "../../components/messages";
 import { persistentSignal } from "../../persistentsignal";
+import { NeedsKey } from "../../key";
 
 const gpt = new GPT();
 const messages = signal([]);
@@ -13,14 +14,16 @@ const systemPrompt = persistentSignal("chat2.systemPrompt", "Respond like you ar
 const ChatInput = signal();
 
 const Chat2 = ({ }) => {
-  return <Page title="Chat 2" start={chat}>
-    <Messages messages={messages} />
-    <div>
-      {ChatInput.value || <div>Loading...</div>}
-      <TextArea label="System prompt:" signal={systemPrompt} />
-    </div>
-    <gpt.Log />
-  </Page>;
+  return <NeedsKey>
+    <Page title="Chat 2" start={chat}>
+      <Messages messages={messages} />
+      <div>
+        {ChatInput.value || <div>Loading...</div>}
+        <TextArea label="System prompt:" signal={systemPrompt} />
+      </div>
+      <gpt.Log />
+    </Page>
+  </NeedsKey>;
 };
 
 export default Chat2;

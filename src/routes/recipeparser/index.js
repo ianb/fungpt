@@ -1,10 +1,10 @@
 import { GPT } from "../../gpt";
-import { tmpl, dedent } from "../../template";
+import { tmpl } from "../../template";
 import { getResult } from "../../components/callback";
 import { signal } from "@preact/signals";
 import { TextArea, Button, H1 } from "../../components/input";
 import { Page } from "../../components/page";
-import { useEffect } from "preact/hooks";
+import { NeedsKey } from "../../key";
 import { Markdown } from "../../markdown";
 
 const gpt = new GPT();
@@ -13,14 +13,13 @@ const structuredRecipe = signal(null);
 const Interaction = signal();
 
 const RecipeParser = ({ }) => {
-  useEffect(() => {
-    recipeParser();
-  }, []);
-  return <Page title="Recipe Librarian">
-    <Recipe recipe={structuredRecipe} />
-    {Interaction.value || <div>Loading...</div>}
-    <gpt.Log />
-  </Page>;
+  return <NeedsKey>
+    <Page title="Recipe Librarian" start={recipeParser}>
+      <Recipe recipe={structuredRecipe} />
+      {Interaction.value || <div>Loading...</div>}
+      <gpt.Log />
+    </Page>
+  </NeedsKey>;
 };
 
 export default RecipeParser;

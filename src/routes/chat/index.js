@@ -5,6 +5,7 @@ import { getResult } from "../../components/callback";
 import { TextInput, TextArea, Button } from "../../components/input";
 import { Page } from "../../components/page";
 import { Messages } from "../../components/messages";
+import { NeedsKey } from "../../key";
 
 const gpt = new GPT();
 const messages = signal([]);
@@ -12,14 +13,16 @@ const systemPrompt = persistentSignal("chat.systemPrompt", "Respond like you are
 const ChatInput = signal();
 
 const Chat = ({ }) => {
-  return <Page title="Chat" start={chat}>
-    <Messages messages={messages} />
-    <div>
-      {ChatInput.value || <div>Loading...</div>}
-      <TextArea label="System prompt:" signal={systemPrompt} />
-    </div>
-    <gpt.Log />
-  </Page>;
+  return <NeedsKey>
+    <Page title="Chat" start={chat}>
+      <Messages messages={messages} />
+      <div>
+        {ChatInput.value || <div>Loading...</div>}
+        <TextArea label="System prompt:" signal={systemPrompt} />
+      </div>
+      <gpt.Log />
+    </Page>
+  </NeedsKey>;
 };
 
 export default Chat;

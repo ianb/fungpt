@@ -18,6 +18,7 @@ const Home = () => {
 					<li><A href="/recipeparser">Recipe Parser</A></li>
 					<li><A href="/slidemaker">Slide Maker</A></li>
 					<li><A href="/presentation">Presentation</A></li>
+					<li><A href="/gptkey">Manage your GPT key</A></li>
 				</ul>
 			</div>
 			<FreeChunk>

@@ -4,7 +4,7 @@ import { getResult } from "../../components/callback";
 import { signal } from "@preact/signals";
 import { TextInput, H1 } from "../../components/input";
 import { Page } from "../../components/page";
-import { useEffect } from "preact/hooks";
+import { NeedsKey } from "../../key";
 
 const gpt = new GPT();
 const secret = signal(null);
@@ -12,11 +12,13 @@ const questions = signal([]);
 const QuestionAsker = signal();
 
 const TwentyQuestions = ({ }) => {
-  return <Page title="20 Questions" start={twentyQuestions}>
-    <QuestionLog questions={questions} secret={secret} />
-    {QuestionAsker.value || <div>Loading...</div>}
-    <gpt.Log />
-  </Page>;
+  return <NeedsKey>
+    <Page title="20 Questions" start={twentyQuestions}>
+      <QuestionLog questions={questions} secret={secret} />
+      {QuestionAsker.value || <div>Loading...</div>}
+      <gpt.Log />
+    </Page>
+  </NeedsKey>;
 };
 
 export default TwentyQuestions;

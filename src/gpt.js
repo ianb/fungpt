@@ -1,5 +1,5 @@
 const url = "https://api.openai.com/v1/chat/completions";
-import { key, gpt4Key } from "./gpt-key.js";
+import { gpt3Key, gpt4Key } from "./key.js";
 import { signal } from "@preact/signals";
 import { persistentSignal } from "./persistentsignal.js";
 import * as icons from "./components/icons";
@@ -40,7 +40,7 @@ export class GPT {
       mode: "cors",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${gpt4Signal.value ? gpt4Key : key}`,
+        Authorization: `Bearer ${gpt4Signal.value ? gpt4Key.value || gpt3Key.value : gpt3Key.value}`,
       },
       body: JSON.stringify(prompt),
     });

@@ -4,9 +4,9 @@ import { getResult } from "../../components/callback";
 import { signal } from "@preact/signals";
 import { TextArea, Button } from "../../components/input";
 import { Page } from "../../components/page";
-import { useEffect } from "preact/hooks";
 import { Messages } from "../../components/messages";
 import { persistentSignal } from "../../persistentsignal";
+import { NeedsKey } from "../../key";
 
 const gpt = new GPT();
 const messages = signal([]);
@@ -17,15 +17,17 @@ const systemPrompts = {
 const ContinueInput = signal();
 
 const SelfChat = () => {
-  return <Page title="Self-Chat" start={selfChat}>
-    <Messages messages={messages} />
-    <div>
-      {ContinueInput.value || <div>Loading...</div>}
-      <TextArea label="Character 1 prompt:" signal={systemPrompts.char1} />
-      <TextArea label="Character 2 prompt:" signal={systemPrompts.char2} />
-    </div>
-    <gpt.Log />
-  </Page>;
+  return <NeedsKey>
+    <Page title="Self-Chat" start={selfChat}>
+      <Messages messages={messages} />
+      <div>
+        {ContinueInput.value || <div>Loading...</div>}
+        <TextArea label="Character 1 prompt:" signal={systemPrompts.char1} />
+        <TextArea label="Character 2 prompt:" signal={systemPrompts.char2} />
+      </div>
+      <gpt.Log />
+    </Page>
+  </NeedsKey>;
 };
 
 export default SelfChat;

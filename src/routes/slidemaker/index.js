@@ -4,12 +4,11 @@ import { getResult } from "../../components/callback";
 import { signal, computed } from "@preact/signals";
 import { TextArea, Button } from "../../components/input";
 import { Page, Tabs, Tab } from "../../components/page";
-import { useEffect } from "preact/hooks";
-import { Messages } from "../../components/messages";
 import { persistentSignal } from "../../persistentsignal";
 import { hashParamsSignal, updateHashParams } from "../../components/hash";
 import { Markdown } from "../../markdown";
 import { MarkdownChooser } from "../../components/markdownchooser";
+import { NeedsKey } from "../../key";
 
 const gpt = new GPT();
 const slides = persistentSignal("slidemaker.slides", "");
@@ -22,23 +21,25 @@ const slidesSplit = computed(() => {
 const Input = signal();
 
 const SlideMaker = ({ }) => {
-  return <Page title="Slide Assist" start={slideAssist}>
-    <Slides />
-    <Tabs>
-      <Tab title="Assist">
-        <div>
-          {Input.value || <div>Loading...</div>}
-        </div>
-        <div>
-          <TextArea label="Instructions:" signal={instructions} />
-        </div>
-      </Tab>
-      <Tab title="Edit">
-        <TextArea label="Slides:" signal={slides} />
-      </Tab>
-    </Tabs>
-    <gpt.Log />
-  </Page>;
+  return <NeedsKey>
+    <Page title="Slide Assist" start={slideAssist}>
+      <Slides />
+      <Tabs>
+        <Tab title="Assist">
+          <div>
+            {Input.value || <div>Loading...</div>}
+          </div>
+          <div>
+            <TextArea label="Instructions:" signal={instructions} />
+          </div>
+        </Tab>
+        <Tab title="Edit">
+          <TextArea label="Slides:" signal={slides} />
+        </Tab>
+      </Tabs>
+      <gpt.Log />
+    </Page>
+  </NeedsKey>;
 };
 
 export default SlideMaker;
