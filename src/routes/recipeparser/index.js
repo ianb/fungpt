@@ -14,7 +14,7 @@ const Interaction = signal();
 
 const RecipeParser = ({ }) => {
   return <NeedsKey>
-    <Page title="Recipe Librarian" start={recipeParser}>
+    <Page title="Recipe Librarian" start={recipeParser} src="recipeparser/index.js">
       <Recipe recipe={structuredRecipe} />
       {Interaction.value || <div>Loading...</div>}
       <gpt.Log />

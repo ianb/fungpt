@@ -53,7 +53,7 @@ const ChatInput = signal();
 
 const SamanthaChat = ({ }) => {
   return <NeedsKey>
-    <Page title="Fancy Chat" start={chat}>
+    <Page title="Fancy Chat" start={chat} src="chat/samantha-chat.js">
       <Messages messages={displayMessages} />
       <div>
         {ChatInput.value || <div>Loading...</div>}

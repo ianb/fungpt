@@ -18,7 +18,7 @@ const ContinueInput = signal();
 
 const SelfChat = () => {
   return <NeedsKey>
-    <Page title="Self-Chat" start={selfChat}>
+    <Page title="Self-Chat" start={selfChat} src="selfchat/index.js">
       <Messages messages={messages} />
       <div>
         {ContinueInput.value || <div>Loading...</div>}

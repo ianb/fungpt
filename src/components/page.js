@@ -6,7 +6,7 @@ import { useState } from "preact/hooks";
 import { hashParamsSignal, updateHashParams } from "./hash";
 import { ErrorBoundary, ErrorCatcher } from "./errorboundary";
 
-export const Page = ({ title, start, children }) => {
+export const Page = ({ title, start, children, src }) => {
   useEffect(() => {
     if (start) {
       start();
@@ -19,7 +19,7 @@ export const Page = ({ title, start, children }) => {
   children = children.filter((child) => child.type !== FreeChunk);
   return (
     <div class="flex flex-col h-screen">
-      <Header title={title} />
+      <Header title={title} src={src} />
       <ErrorCatcher />
       <main class="flex-1 flex overflow-auto bg-gray-300">
         {children.map((child) => {
@@ -43,7 +43,7 @@ export const FreeChunk = ({ children }) => {
   return <>{children}</>;
 };
 
-export const Header = ({ title }) => {
+export const Header = ({ title, src }) => {
   return (
     <header class="bg-blue-complement text-white py-1 px-2 height-4 flex justify-between items-center">
       <h1 class="text-lg font-semibold">
@@ -82,6 +82,11 @@ export const Header = ({ title }) => {
         </label>
         <img src="/assets/minnebar-icon.svg" class="inline-block h-4 w-4 mr-2" />
         Minnebar 17
+        {src && (
+          <a href={`https://github.com/ianb/fungpt/blob/main/src/routes/${src}`} target="_blank" class="ml-2" title="View source code">
+            <icons.GitHub class="h-4 w-4 inline-block text-white" />
+          </a>
+        )}
       </span>
     </header>
   );

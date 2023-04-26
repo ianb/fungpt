@@ -14,7 +14,7 @@ const ChatInput = signal();
 
 const FancyChat = ({ }) => {
   return <NeedsKey>
-    <Page title="Fancy Chat" start={chat}>
+    <Page title="Fancy Chat" start={chat} src="chat/fancy-chat.js">
       <Messages messages={messages} />
       <div>
         {ChatInput.value || <div>Loading...</div>}

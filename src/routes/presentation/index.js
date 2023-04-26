@@ -8,7 +8,7 @@ const Presentation = () => {
   useEffect(() => {
     fetch("/assets/presentation.md").then(async (res) => await res.text()).then(setSource);
   }, []);
-  return <Page title="Fun with GPT">
+  return <Page title="Fun with GPT" src="../assets/presentation.md">
     <FreeChunk>
       <div class="bg-white m-2 p-8 rounded shadow-xl w-full text-xl">
         {!source ? <div>Loading...</div> : <MarkdownSlides text={source} />}

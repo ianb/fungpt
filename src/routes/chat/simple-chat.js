@@ -14,7 +14,7 @@ const ChatInput = signal();
 
 const SimpleChat = ({ }) => {
   return <NeedsKey>
-    <Page title="Chat" start={chat}>
+    <Page title="Chat" start={chat} src="chat/simple-chat.js">
       <Messages messages={messages} />
       <div>
         {ChatInput.value || <div>Loading...</div>}

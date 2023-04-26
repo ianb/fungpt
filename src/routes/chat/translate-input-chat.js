@@ -16,7 +16,7 @@ const ChatInput = signal();
 
 const TranslateInputChat = ({ }) => {
   return <NeedsKey>
-    <Page title="Chat 3" start={chat}>
+    <Page title="Chat 3" start={chat} src="chat/translate-input-chat.js">
       <Messages messages={messages} />
       <div>
         {ChatInput.value || <div>Loading...</div>}

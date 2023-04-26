@@ -19,7 +19,7 @@ const history = persistentSignal("rp-history", []);
 
 const RolePlayGame = ({ }) => {
   return <NeedsKey>
-    <Page title="Role Play Game" start={rolePlayGame}>
+    <Page title="Role Play Game" start={rolePlayGame} src="roleplaygame/index.js">
       <div>
         <div class="bg-sky-300 p-2 m-2 rounded-lg">
           <Markdown text={worldState.value} />

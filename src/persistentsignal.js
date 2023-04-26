@@ -11,6 +11,7 @@ export function persistentSignal(name, defaultValue) {
     value = defaultValue;
   }
   const s = signal(value);
+  s.defaultValue = defaultValue;
   effect(() => {
     localStorage.setItem(`signal.${name}`, JSON.stringify(s.value));
   });

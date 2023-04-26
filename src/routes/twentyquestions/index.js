@@ -13,7 +13,7 @@ const QuestionAsker = signal();
 
 const TwentyQuestions = ({ }) => {
   return <NeedsKey>
-    <Page title="20 Questions" start={twentyQuestions}>
+    <Page title="20 Questions" start={twentyQuestions} src="twentyquestions/index.js">
       <QuestionLog questions={questions} secret={secret} />
       {QuestionAsker.value || <div>Loading...</div>}
       <gpt.Log />

@@ -22,7 +22,7 @@ const Input = signal();
 
 const SlideMaker = ({ }) => {
   return <NeedsKey>
-    <Page title="Slide Assist" start={slideAssist}>
+    <Page title="Slide Assist" start={slideAssist} src="slidemaker/index.js">
       <Slides />
       <Tabs>
         <Tab title="Assist">

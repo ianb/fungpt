@@ -15,7 +15,7 @@ const ChatInput = signal();
 
 const EndingChat = ({ }) => {
   return <NeedsKey>
-    <Page title="Chat 2" start={chat}>
+    <Page title="Chat 2" start={chat} src="chat/ending-chat.js">
       <Messages messages={messages} />
       <div>
         {ChatInput.value || <div>Loading...</div>}
