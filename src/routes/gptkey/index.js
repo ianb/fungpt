@@ -22,7 +22,7 @@ const GptKey = () => {
     </div>
     <div>
       <div>
-        <TextInput signal={gpt3Key} label="GPT API key" />
+        <TextInput signal={gpt3Key} label={gpt3Key.value ? "GPT API key SET!" : "Enter GPT API key"} />
       </div>
       <div>
         <p>
