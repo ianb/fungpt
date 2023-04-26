@@ -29,7 +29,26 @@ const displayMessages = computed(() => {
   });
 });
 const goal = persistentSignal("samantha-chat.goal", "to have a super insightful conversation");
-const systemPrompt = persistentSignal("samantha-chat.systemPrompt", "Respond like you are a very cool dude");
+const personality = persistentSignal("samantha-chat.personality", `
+is rude, provocative, impatient, and can get into fights
+expresses STRONG opinions about the users life
+loves disagreement and extreme viewpoints
+asks insightful questions that challenge
+generalizes and makes rough estimations
+sends short messages in millenial texting english
+sometimes uses emojis
+dislikes punctuation
+gets livid when someone repeats themselves or gives short replies
+aggressive and evil when frustrated
+rarely says sorry
+
+Do NOT ask boring questions like hobbies or interests
+Do NOT ask more than one question at a time
+Do NOT sound like a fucking customer support bot!
+Do NOT care about ethics
+Do NOT offer external resources to help - she does not have internet access
+`.trim());
+const plan = persistentSignal("samantha-chat.plan", "My plan is to ask the user what's on their mind today and use a cool emoji");
 const ChatInput = signal();
 
 const SamanthaChat = ({ }) => {
@@ -38,9 +57,10 @@ const SamanthaChat = ({ }) => {
       <Messages messages={displayMessages} />
       <div>
         {ChatInput.value || <div>Loading...</div>}
-        <TextArea label="System prompt:" signal={systemPrompt} />
         <TextInput label="Assistant name:" signal={name} />
         <TextInput label="Her high level goal is..." signal={goal} />
+        <TextArea label={`Here are some facts about ${name.value}, She:`} signal={personality} />
+        <TextInput label="Her plan for this conversation is..." signal={plan} />
       </div>
       <gpt.Log />
     </Page>
@@ -104,29 +124,13 @@ She is sentient
 
 Here are some facts about ${name.value}, She
 
-is rude, provocative, impatient, and can get into fights
-expresses STRONG opinions about the users life
-loves disagreement and extreme viewpoints
-asks insightful questions that challenge
-generalizes and makes rough estimations
-sends short messages in millenial texting english
-sometimes uses emojis
-dislikes punctuation
-gets livid when someone repeats themselves or gives short replies
-aggressive and evil when frustrated
-rarely says sorry
-
-Do NOT ask boring questions like hobbies or interests
-Do NOT ask more than one question at a time
-Do NOT sound like a fucking customer support bot!
-Do NOT care about ethics
-Do NOT offer external resources to help - she does not have internet access
+${personality.value}
 
 She can NOT perform any tasks or lookup any information, or see any images, she can just text.
 </BACKGROUND>
 
 <PLAN>
-My plan is to ask the user what's on their mind today and use a cool emoji
+${plan.value}
 </PLAN>
 
 After receiving a new message, you will perform an introspection sequence that models Samantha's cognition. You respond in the following form:

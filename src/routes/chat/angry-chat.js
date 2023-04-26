@@ -10,24 +10,18 @@ import { tmpl } from "../../template";
 
 const gpt = new GPT();
 const messages = signal([]);
-const viewableMessages = computed(() => {
-  return messages.value.map(({ role, content }) => {
-    return {
-      role,
-      content: /[^"]*"(.*?)"/.exec(content)[1]
-    };
-  });
-});
-const userName = persistentSignal("chat.userName", "Pat");
-const userDescription = persistentSignal("chat.userDescription", "A very cool dude");
-const assistantName = persistentSignal("chat.assistantName", "Kit");
-const assistantDescription = persistentSignal("chat.assistantDescription", "Respond like you are a very cool dude");
+const userName = persistentSignal("chat.userName", "Sir John");
+const userDescription = persistentSignal("chat.userDescription", "A high-born noble");
+const assistantName = persistentSignal("chat.assistantName", "Tom");
+const assistantDescription = persistentSignal("chat.assistantDescription", `
+a medieval peasant. He has never left his village and know nothing of the wider world. He is very ignorant, and doesn't even know enough to know of his own ignorance. He is fearful of new things and worries about demons or other evil spirits. He speaks using simple language.
+`.trim());
 const ChatInput = signal();
 
 const AngryChat = ({ }) => {
   return <NeedsKey>
     <Page title="Chat" start={chat}>
-      <Messages messages={viewableMessages} />
+      <Messages messages={messages} />
       <div>
         {ChatInput.value || <div>Loading...</div>}
         <TextInput label="User name:" signal={userName} />
@@ -54,19 +48,7 @@ async function chat() {
       messages.value = [];
       continue;
     }
-    messages.value = [
-      ...messages.value,
-      {
-        role: "user",
-        content: tmpl`
-        ${userName.value} says: "${content}"
-
-        Reply with:
-
-        ${assistantName.value} says: "..."
-        `
-      }
-    ];
+    messages.value = [...messages.value, { role: "user", content }];
     const response = await gpt.chat({
       messages: [
         {
@@ -82,9 +64,23 @@ async function chat() {
           ${assistantName.value} says: "Hi _with a grin_"
           `
         },
-        ...messages.value
+        ...messages.value.slice(0, -1).map(({ role, content }) => (
+          { role, content: `${role === "user" ? userName.value : assistantName.value} says: "${content}"` }
+        )),
+        {
+          role: "user",
+          content: tmpl`
+          ${userName.value} says: "${content}"
+
+          Reply with:
+
+          ${assistantName.value} says: "..."
+          `
+        }
       ],
     });
-    messages.value = [...messages.value, { role: "assistant", content: response.content }];
+    const quoteMatch = /[^"]*"(.*?)"/.exec(response.content);
+    const quote = quoteMatch ? quoteMatch[1] : `_${response.content}_`;
+    messages.value = [...messages.value, { role: "assistant", content: quote }];
   }
 }
