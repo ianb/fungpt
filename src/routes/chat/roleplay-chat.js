@@ -18,7 +18,7 @@ a medieval peasant. He has never left his village and know nothing of the wider 
 `.trim());
 const ChatInput = signal();
 
-const AngryChat = ({ }) => {
+const RoleplayChat = ({ }) => {
   return <NeedsKey>
     <Page title="Chat" start={chat}>
       <Messages messages={messages} />
@@ -34,7 +34,7 @@ const AngryChat = ({ }) => {
   </NeedsKey>;
 };
 
-export default AngryChat;
+export default RoleplayChat;
 
 /**** LOGIC LOOP ****/
 

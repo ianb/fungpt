@@ -11,7 +11,7 @@ const Home = () => {
 							<li><A href="/chat/simple">Simple chat</A></li>
 							<li><A href="/chat/ending">Chat with ending</A></li>
 							<li><A href="/chat/translate-input">Chat that translates input</A></li>
-							<li><A href="/chat/angry">Angry chat</A></li>
+							<li><A href="/chat/roleplay">Roleplay chat</A></li>
 							<li><A href="/chat/fancy">Fancy chat</A></li>
 							<li><A href="/chat/samantha">Samantha chat</A></li>
 							<li><A href="/selfchat">Self-Chat: GPT vs GPT</A></li>

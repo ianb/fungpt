@@ -6,7 +6,7 @@ import Home from '../routes/home';
 import SimpleChat from "../routes/chat/simple-chat";
 import EndingChat from "../routes/chat/ending-chat";
 import TranslateInputChat from "../routes/chat/translate-input-chat";
-import AngryChat from '../routes/chat/angry-chat';
+import RoleplayChat from '../routes/chat/roleplay-chat';
 import FancyChat from '../routes/chat/fancy-chat';
 import SamanthaChat from '../routes/chat/samantha-chat';
 import SelfChat from "../routes/selfchat";
@@ -27,7 +27,7 @@ const App = () => {
 				<SimpleChat path="/chat/simple" />
 				<EndingChat path="/chat/ending" />
 				<TranslateInputChat path="/chat/translate-input" />
-				<AngryChat path="/chat/angry" />
+				<RoleplayChat path="/chat/roleplay" />
 				<FancyChat path="/chat/fancy" />
 				<SamanthaChat path="/chat/samantha" />
 				<SelfChat path="/selfchat/" />
