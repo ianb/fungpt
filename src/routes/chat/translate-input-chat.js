@@ -10,13 +10,19 @@ import { NeedsKey } from "../../key";
 
 const gpt = new GPT();
 const messages = signal([]);
-const systemPrompt = persistentSignal("chat3.systemPrompt", "Respond like you are a very cool dude");
-const translationPrompt = persistentSignal("chat3.translationPrompt", "");
+const systemPrompt = persistentSignal("translate-input-chat.systemPrompt", "You play the part of a friendly bard at the local tavern. The setting is medieval times. You are curious to hear new stories.");
+const translationPrompt = persistentSignal("translate-input-chat.translationPrompt", `
+You are helping the user role play as a medieval wizard. Whatever the user says you should reply with a phrase with the same meaning, but using speech that is appropriate for a medieval wizard.
+
+Example:
+user: translate: "Howdy!"
+assistant: Good day sir!
+`.trim());
 const ChatInput = signal();
 
 const TranslateInputChat = ({ }) => {
   return <NeedsKey>
-    <Page title="Chat 3" start={chat} src="chat/translate-input-chat.js">
+    <Page title="Chat/Translate Input" start={chat} src="chat/translate-input-chat.js">
       <Messages messages={messages} />
       <div>
         {ChatInput.value || <div>Loading...</div>}

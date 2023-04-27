@@ -10,12 +10,12 @@ import { NeedsKey } from "../../key";
 
 const gpt = new GPT();
 const messages = signal([]);
-const systemPrompt = persistentSignal("chat2.systemPrompt", "Respond like you are a very cool dude");
+const systemPrompt = persistentSignal("ending-chat.systemPrompt", "You are playing the part of someone very snooty who only wants to talk to the most elite sort of person. You are judgemental and suspicious. If you don't consider someone worthy you will end the conversation abruptly.");
 const ChatInput = signal();
 
 const EndingChat = ({ }) => {
   return <NeedsKey>
-    <Page title="Chat 2" start={chat} src="chat/ending-chat.js">
+    <Page title="Chat/Ending-Goodbye" start={chat} src="chat/ending-chat.js">
       <Messages messages={messages} />
       <div>
         {ChatInput.value || <div>Loading...</div>}

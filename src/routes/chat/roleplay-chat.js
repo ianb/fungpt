@@ -20,7 +20,7 @@ const ChatInput = signal();
 
 const RoleplayChat = ({ }) => {
   return <NeedsKey>
-    <Page title="Chat" start={chat} src="chat/roleplay-chat.js">
+    <Page title="Chat/Roleplay" start={chat} src="chat/roleplay-chat.js">
       <Messages messages={messages} />
       <div>
         {ChatInput.value || <div>Loading...</div>}

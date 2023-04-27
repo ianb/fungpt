@@ -11,8 +11,8 @@ import { NeedsKey } from "../../key";
 const gpt = new GPT();
 const messages = signal([]);
 const systemPrompts = {
-  char1: persistentSignal("selfchat.char1", "Respond like you are a very cool dude"),
-  char2: persistentSignal("selfchat.char2", "Respond like you are a very mean dude"),
+  char1: persistentSignal("selfchat.char1", "Respond like you are a timid mouse who isn't sure who she is talking to but is quite worried"),
+  char2: persistentSignal("selfchat.char2", "Respond like you are an aggressive and hungry cat on the lookout for prey"),
 };
 const ContinueInput = signal();
 
