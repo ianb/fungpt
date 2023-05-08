@@ -92,13 +92,12 @@ export const Header = ({ title, src }) => {
   );
 };
 
-export const Tabs = ({ children, class: className, listClass, hashParam, listChildren }) => {
+export const Tabs = ({ children, class: className, listClass, hashParam, listChildren, defaultSelectedIndex }) => {
   if (!Array.isArray(children)) {
     children = [children];
   }
   const tabs = children.filter((child) => child.type === Tab);
   children = children.filter((child) => child.type !== Tab);
-  let defaultSelectedIndex;
   if (hashParam) {
     defaultSelectedIndex = parseInt(hashParamsSignal.value.get(hashParam), 10);
   }

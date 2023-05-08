@@ -1,5 +1,5 @@
 import { twMerge } from "tailwind-merge";
-import { useRef, useEffect } from "preact/hooks";
+import { useRef, useEffect, useState } from "preact/hooks";
 import { ReturnResult } from "./callback";
 
 export const TextInput = ({ label, signal, class: className, ...props }) => {
@@ -41,7 +41,31 @@ export const TextInput = ({ label, signal, class: className, ...props }) => {
   </ReturnResult.Consumer>;
 };
 
-const Label = ({ label, class: className, children }) => {
+export const SimpleTextInput = ({ class: className, ...props }) => {
+  if (!props.ref) {
+    props.ref = useRef();
+  }
+  useEffect(() => {
+    if (!props.onSubmit || !props.ref.current) {
+      return;
+    }
+    function onKeyDown(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        event.stopPropagation();
+        props.onSubmit(event);
+      }
+    }
+    props.ref.current.addEventListener("keydown", onKeyDown);
+    return () => {
+      props.ref.current.removeEventListener("keydown", onKeyDown);
+    };
+  }, [props.onSubmit, props.ref.current]);
+  className = twMerge("shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight", className);
+  return <input class={className} type="text" {...props} />;
+};
+
+export const Label = ({ label, class: className, children }) => {
   return <label>
     <div class={twMerge("block text-gray-700 text-sm font-bold mb-1 mt-2", className)}>{label}</div>
     {children}
@@ -157,7 +181,7 @@ export const ExpandableTextArea = ({ class: className, ...props }) => {
 export const Button = ({ returns, onClick, children, class: className, ...props }) => {
   if (!returns && onClick) {
     return <button
-      class={twMerge("bg-magenta hover:bg-blue-700 text-white py-2 px-4 rounded-lg m-1", className)}
+      class={twMerge("bg-magenta hover:bg-blue-700 text-white py-1 px-2 rounded-lg m-1", className)}
       onClick={onClick} {...props}>
       {children}
     </button>;
@@ -187,4 +211,55 @@ export const H1 = ({ children, class: className, ...props }) => {
       {children}
     </h1>
   );
+};
+
+export const ChooseOne = ({ children }) => {
+  return <ReturnResult.Consumer>
+    {(onDone) => (
+      <div>
+        {children.map((child, i) => (
+          <div class="hover:bg-gray-300 cursor-pointer" key={i} onClick={() => {
+            onDone(child.props.returns || child);
+          }}>
+            {child}
+          </div>
+        ))}
+      </div>
+    )}
+  </ReturnResult.Consumer>;
+};
+
+export const ChooseMany = ({ children }) => {
+  const [selected, setSelected] = useState([]);
+  return <ReturnResult.Consumer>
+    {(onDone) => {
+      function onClick(child) {
+        if (selected.includes(child)) {
+          setSelected(selected.filter((c) => c !== child));
+        } else {
+          setSelected([...selected, child]);
+        }
+      }
+      function onDoneClick() {
+        if (selected.length) {
+          onDone(selected.map((x) => x.props.returns || x));
+        }
+      }
+      return <ul>
+        {children.map((child, i) => (
+          <li
+            role="button"
+            class={selected.includes(child) ? "hover:bg-gray-500 cursor-pointer bg-gray-400" : "hover:bg-gray-300 cursor-pointer"}
+            key={i}
+            onClick={() => onClick(child)}
+          >
+            {child}
+          </li>
+        ))}
+        {selected.length ?
+          <li><Button onClick={onDoneClick}>Done</Button></li>
+          : <li><Button onClick={() => { }} disabled="1">Done</Button></li>}
+      </ul>;
+    }}
+  </ReturnResult.Consumer>;
 };

@@ -13,7 +13,12 @@ export function persistentSignal(name, defaultValue) {
   const s = signal(value);
   s.defaultValue = defaultValue;
   effect(() => {
-    localStorage.setItem(`signal.${name}`, JSON.stringify(s.value));
+    try {
+      localStorage.setItem(`signal.${name}`, JSON.stringify(s.value));
+    } catch (e) {
+      console.error("Error saving signal", name, s.value, e);
+      throw e;
+    }
   });
   return s;
 }

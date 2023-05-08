@@ -18,6 +18,22 @@ export function tmpl(strings, ...args) {
   return parseTemplate(dedent(template), props);
 }
 
+export function fillTemplate(template, evaluator) {
+  const props = new Map();
+  const parts = [];
+  const subs = [];
+  let match;
+  let regex = /\{\{(.*?)\}\}/g;
+  let pos = 0;
+  while ((match = regex.exec(template))) {
+    parts.push(template.slice(pos, match.index));
+    subs.push(evaluator(match[1]));
+    pos = match.index + match[0].length;
+  }
+  parts.push(template.slice(pos));
+  return tmpl(parts, ...subs);
+}
+
 function parseTemplate(template, props) {
   const tailingPunctuationMatcher = /(\$\{placeholder-\d+\})([.,])/g;
   let match;
@@ -91,7 +107,7 @@ function substituteTemplate(template, props) {
   return result;
 }
 
-function isEmpty(v) {
+export function isEmpty(v) {
   return (
     v === null ||
     v === undefined ||
@@ -100,7 +116,7 @@ function isEmpty(v) {
   );
 }
 
-function repr(v) {
+export function repr(v) {
   if (v === null || v === undefined) {
     return "[No value]";
   }

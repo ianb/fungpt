@@ -17,3 +17,15 @@ export function getResult(containerSignal, component) {
     </ReturnResult.Provider>;
   });
 }
+
+export async function fillSignal({ container, signal, request, mutator }) {
+  if (signal.value) {
+    return signal.value;
+  }
+  let value = await getResult(container, request());
+  if (mutator) {
+    value = await mutator(value);
+  }
+  signal.value = value;
+  return signal.value;
+}

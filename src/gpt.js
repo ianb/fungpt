@@ -28,6 +28,8 @@ export class GPT {
     if (!prompt.model && gpt4Signal.value) {
       prompt.model = "gpt-4";
       delete prompt.max_tokens;
+    } else if (prompt.model === "gpt-4") {
+      delete prompt.max_tokens;
     } else {
       prompt.model = "gpt-3.5-turbo";
       prompt.max_tokens = 2000;
