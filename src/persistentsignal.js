@@ -14,7 +14,11 @@ export function persistentSignal(name, defaultValue) {
   s.defaultValue = defaultValue;
   effect(() => {
     try {
-      localStorage.setItem(`signal.${name}`, JSON.stringify(s.value));
+      if (s.value === defaultValue) {
+        localStorage.removeItem(`signal.${name}`);
+      } else {
+        localStorage.setItem(`signal.${name}`, JSON.stringify(s.value));
+      }
     } catch (e) {
       console.error("Error saving signal", name, s.value, e);
       throw e;
