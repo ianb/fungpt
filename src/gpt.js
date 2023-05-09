@@ -32,7 +32,9 @@ export class GPT {
       delete prompt.max_tokens;
     } else {
       prompt.model = "gpt-3.5-turbo";
-      prompt.max_tokens = 2000;
+      if (!prompt.max_tokens) {
+        prompt.max_tokens = 2000;
+      }
     }
     if (temperatureSignal.value !== null) {
       prompt.temperature = temperatureSignal.value;
