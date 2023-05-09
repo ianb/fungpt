@@ -13,6 +13,7 @@ import SelfChat from "../routes/selfchat";
 import TwentyQuestions from '../routes/twentyquestions';
 import AlgebraTutor from "../routes/algebratutor";
 import RolePlayGame from "../routes/roleplaygame";
+import SummaryChat from '../routes/chat/summary-chat';
 import RecipeParser from "../routes/recipeparser";
 import SlideMaker from '../routes/slidemaker';
 import Presentation from '../routes/presentation';
@@ -28,6 +29,7 @@ const App = () => {
 				<EndingChat path="/chat/ending" />
 				<TranslateInputChat path="/chat/translate-input" />
 				<RoleplayChat path="/chat/roleplay" />
+				<SummaryChat path="/chat/summary" />
 				<FancyChat path="/chat/fancy" />
 				<SamanthaChat path="/chat/samantha" />
 				<SelfChat path="/selfchat/" />

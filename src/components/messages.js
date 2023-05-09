@@ -34,10 +34,16 @@ export const Messages = ({ messages }) => {
 };
 
 const MessageAnnotation = ({ annotations }) => {
+  if (!Array.isArray(annotations)) {
+    annotations = [annotations];
+  }
   return <div>
     {annotations.map((annotation) => {
-      return <div class="text-xs text-gray-500">
-        <div class="font-semibold">{annotation.tag}</div>
+      if (typeof annotation === "string") {
+        annotation = { content: annotation };
+      }
+      return <div class="text-sm text-gray-500">
+        {annotations.tag ? <div class="font-semibold">{annotation.tag}</div> : null}
         <Markdown text={annotation.content} />
       </div>
     })}
