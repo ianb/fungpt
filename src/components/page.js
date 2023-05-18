@@ -6,7 +6,7 @@ import { useState } from "preact/hooks";
 import { hashParamsSignal, updateHashParams } from "./hash";
 import { ErrorBoundary, ErrorCatcher } from "./errorboundary";
 
-export const Page = ({ title, start, children, src }) => {
+export const Page = ({ title, start, children, src, headerButtons }) => {
   useEffect(() => {
     if (start) {
       start();
@@ -19,7 +19,7 @@ export const Page = ({ title, start, children, src }) => {
   children = children.filter((child) => child.type !== FreeChunk);
   return (
     <div class="flex flex-col h-screen">
-      <Header title={title} src={src} />
+      <Header title={title} src={src} buttons={headerButtons} />
       <ErrorCatcher />
       <main class="flex-1 flex overflow-auto bg-gray-300">
         {children.map((child) => {
@@ -43,7 +43,7 @@ export const FreeChunk = ({ children }) => {
   return <>{children}</>;
 };
 
-export const Header = ({ title, src }) => {
+export const Header = ({ title, src, buttons }) => {
   return (
     <header class="bg-blue-complement text-white py-1 px-2 height-4 flex justify-between items-center">
       <h1 class="text-lg font-semibold">
@@ -80,6 +80,7 @@ export const Header = ({ title, src }) => {
           GPT-4?
           <input type="checkbox" class="ml-2" checked={gpt4Signal} onChange={(e) => gpt4Signal.value = e.target.checked} />
         </label>
+        {buttons}
         <img src="/assets/minnebar-icon.svg" class="inline-block h-4 w-4 mr-2" />
         Minnebar 17
         {src && (
