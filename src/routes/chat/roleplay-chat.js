@@ -7,6 +7,7 @@ import { Page } from "../../components/page";
 import { Messages } from "../../components/messages";
 import { NeedsKey } from "../../key";
 import { tmpl } from "../../template";
+import { ImportExportPopup } from "../../components/importexport";
 
 const gpt = new GPT();
 const messages = persistentSignal("roleplay-chat.messages", []);
@@ -20,7 +21,7 @@ const ChatInput = signal();
 
 const RoleplayChat = ({ }) => {
   return <NeedsKey>
-    <Page title="Chat/Roleplay" start={chat} src="chat/roleplay-chat.js">
+    <Page title="Chat/Roleplay" start={chat} src="chat/roleplay-chat.js" headerButtons={[<ImportExportPopup title={assistantName.value} signals={{ messages, userName, userDescription, assistantName, assistantDescription }} />]}>
       <Messages messages={messages} />
       <div>
         {ChatInput.value || <div>Loading...</div>}
