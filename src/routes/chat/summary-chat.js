@@ -1,13 +1,14 @@
-import { signal, computed } from "@preact/signals";
+import { signal } from "@preact/signals";
 import { persistentSignal } from "../../persistentsignal";
 import { GPT } from "../../gpt";
 import { getResult } from "../../components/callback";
 import { TextInput, TextArea, Button } from "../../components/input";
 import { Page } from "../../components/page";
-import { Messages } from "../../components/messages";
+import { MessageTranscript } from "../../components/messagetranscript";
 import { NeedsKey } from "../../key";
 import { tmpl } from "../../template";
 import { ImportExportPopup } from "../../components/importexport";
+import { parseTags, serializeTags } from "../../parsetags";
 
 const gpt = new GPT();
 const messages = persistentSignal("summary-chat.messages", []);
@@ -42,7 +43,7 @@ const SummaryChat = ({ }) => {
       src="chat/summary-chat.js"
       headerButtons={[<ImportExportPopup title={assistantName.value} appId="saves.summary-chat" signals={{ messages, summaries, userName, userDescription, assistantName, assistantDescription, descriptionLength }} />]}
     >
-      <Messages messages={messages} />
+      <MessageTranscript messages={messages} userName={userName.value} assistantName={assistantName.value} />
       <div>
         {Input.value || <div>Loading...</div>}
         <TextInput label="Description length:" signal={descriptionLength} />
@@ -85,7 +86,7 @@ async function chat() {
         messages.value = messages.value.slice(0, -1);
       }
       const lastMessage = messages.value[messages.value.length - 1];
-      defaultValue = lastMessage.content;
+      defaultValue = lastMessage.actions.find(a => a.type === "dialog").content;
       if (lastMessage.commands) {
         defaultValue = `${defaultValue} [${lastMessage.commands}]`;
       }
@@ -114,7 +115,7 @@ async function chat() {
       return "";
     }).trim();
     commands = commands.join("\n");
-    messages.value = [...messages.value, { role: "user", content: dialog, commands }];
+    messages.value = [...messages.value, { role: "user", actions: [{ type: "dialog", character: userName.value, content: dialog }], commands }];
     let recentMessages;
     let index;
     let summary;
@@ -151,79 +152,55 @@ async function chat() {
           """
           ${summary}
           """
-
-          When formatting a reply you will always use the exact form:
-
-          ${assistantName.value} says: "Hi _with a grin_"
-
-          Description: An optional visual description of anything that happened (1-3 sentences)
           `
         },
-        ...recentMessages.slice(0, -1).map(({ role, content, annotations }) => {
-          const message = { role, content: `${role === "user" ? userName.value : assistantName.value} says: "${content}"${annotations ? "\n\nDescription: " + annotations.join(", ") : ""}` }
-          message.content = message.content.slice(0, 1500);
+        ...recentMessages.slice(0, -1).map(({ role, actions }) => {
+          const message = { role };
+          message.content = serializeTags(actions);
+          message.content = message.content.slice(0, 1200);
           return message;
         }),
         {
           role: "user",
           content: tmpl`
-          ${userName.value} says: ${dialog}
+          <dialog character="${userName.value}">
+          ${dialog}
+          </dialog>
 
           Reply with:
 
-          ${assistantName.value}'s decision: [1 sentence where ${assistantName.value} considers what to do say or do next; when the choice is critical list and consider multiple options]
+          <decision-process character="${assistantName.value}">
+          [ONE sentence where ${assistantName.value} considers what to do say or do next; when the choice is critical list and consider multiple options. Be concise, do not let ${assistantName.value} dwell on the same issues]
+          </decision-process>
 
-          ${assistantName.value} says: "[dialog]"
+          <dialog character="${assistantName.value}">
+          [what ${assistantName.value} says or does]
+          </dialog>
 
-          Description: [Unless other instructions indicate otherwise, ${descriptionLength.value} of visual description or a description of events]
+          <thoughts-and-emotions character="${assistantName.value}">
+          [1-2 sentences describing ${assistantName.value}'s inner monologue, thoughts, or feelings. Be concise and describe changes, do not let ${assistantName.value} dwell repeatedly on the same issues]
+          </thoughts-and-emotions>
 
-          Internal thoughts: [1-2 sentences describing ${assistantName.value}'s inner monologue, thoughts, or feelings]
+          <description>
+          [Unless other instructions indicate otherwise, ${descriptionLength.value} of visual description or a description of events. Only include this tag if ${assistantName.value} performed some action or there is something notable to describe]
+          </description>
 
-          ${commands}
+          [[When the reply make note of these instructions: ${commands}]]
           `
         }
       ],
+      reducer: reduceConversationMessages,
       max_tokens: 500,
     });
-    const quoteMatch = /^.{0,30} says:(.*)/m.exec(response.content);
-    const rest = response.content.replace(/^.{0,30} says:(.*)/m, "").trim();
-    // The actions will be everything except paragraphs that include quotes
-    let description = rest;
-    description = description.replace(/^Description:\s*/gmi, "");
-    description = description.replace(/\n\n\n+/, "\n\n").trim();
-    let quote;
-    if (quoteMatch) {
-      quote = quoteMatch[1].replace(/^[\s"]*/, "").replace(/[\s"]$/, "");
-    } else {
-      // FIXME: not a great way to do this, maybe we should fix up the result with a GPT
-      // call when this happens...
-      quote = response.content;
-      description = "";
-    }
-    const annotations = {};
-    if (description) {
-      annotations.annotations = [description];
-    }
-    messages.value = [...messages.value, { role: "assistant", content: quote, ...annotations }];
+    let actions = parseTags(response.content);
+    actions = trimBadDialog(dialog, userName.value, actions);
+    messages.value = [...messages.value, { role: "assistant", actions }];
   }
 }
 
 async function makeSummary(summary, recentMessages) {
-  const log = recentMessages.map(({ role, content, annotations }) => {
-    const says = content ? `says: "${content}"` : "says nothing";
-    let logItem = `${role === "user" ? userName.value : assistantName.value} ${says}`;
-    if (annotations) {
-      if (!Array.isArray(annotations)) {
-        annotations = [annotations];
-      }
-      for (let annotation of annotations) {
-        if (typeof annotation === "string") {
-          annotation = { tag: "Description", content: annotation };
-        }
-        logItem += `\n${annotation.tag || "Description"}: ${annotation.content.slice(0, 500)}`;
-      }
-    }
-    return logItem;
+  const log = recentMessages.map(({ role, actions }) => {
+    return serializeTags(actions);
   }).join("\n\n");
   const response = await gpt.chat({
     messages: [
@@ -248,7 +225,7 @@ async function makeSummary(summary, recentMessages) {
         2. ${assistantName.value}'s observations of ${userName.value}
 
         # Core memory scenes
-        When there is an important/pivotal scene or interaction, such that the scene itself should be remembered, write a one-sentence description of the scene. Combine entries for brevity. Important scenes should be marked IMPORTANT and should be prioritized when removing items.
+        When there is an important/pivotal scene or interaction, such that the scene itself should be remembered, write a one-sentence description of the scene. Combine entries for brevity. Important scenes should be marked IMPORTANT and should be kept whenever possible, unless it is possible to combine IMPORTANT items together into one item.
 
         # Factual memories
         A list of important objective facts that have been established in the conversation. These can be:
@@ -291,4 +268,36 @@ async function makeSummary(summary, recentMessages) {
     max_tokens: 1000,
   });
   return response.content;
+}
+
+function trimBadDialog(userDialog, userName, actions) {
+  return actions.filter(action => {
+    return !(action.type === "dialog" && action.character === userName && looseMatch(action.content, userDialog));
+  });
+}
+
+function looseMatch(a, b) {
+  console.log([normalize(a), normalize(b)]);
+  return normalize(a) === normalize(b);
+}
+
+function normalize(s) {
+  return s.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function reduceConversationMessages(prompt, exc) {
+  const biggest = Math.max(...prompt.messages.slice(1, -1).map(({ content }) => content.length));
+  const newPrompt = { ...prompt };
+  const limit = Math.floor(biggest * 0.9);
+  newPrompt.messages = prompt.messages.map(({ content, ...rest }, i) => {
+    if (i === 0 || i === prompt.messages.length - 1) {
+      return { content, ...rest };
+    }
+    if (content.length > limit) {
+      console.log(`Trimming message #${i + 1}: ${content.length}→${limit}`);
+      content = content.slice(0, limit);
+    }
+    return { content, ...rest };
+  });
+  return newPrompt;
 }
