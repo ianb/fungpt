@@ -21,6 +21,7 @@ export class GPT {
 
   async chat(prompt) {
     prompt = Object.assign({}, defaultChatPrompt, prompt);
+    let reducer;
     const response = new GPTResponse({ prompt });
     this.logs.value = [response, ...this.logs.value];
     console.info("Sending ChatGPT request:", prompt);
@@ -36,34 +37,69 @@ export class GPT {
         prompt.max_tokens = 2000;
       }
     }
+    if (prompt.reducer) {
+      reducer = prompt.reducer;
+      delete prompt.reducer;
+    }
     if (temperatureSignal.value !== null) {
       prompt.temperature = temperatureSignal.value;
     }
-    const resp = await fetch(url, {
-      method: "POST",
-      mode: "cors",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${gpt4Signal.value ? gpt4Key.value || gpt3Key.value : gpt3Key.value}`,
-      },
-      body: JSON.stringify(prompt),
-    });
-    response.end = Date.now();
-    if (!resp.ok) {
-      const body = await resp.json();
-      console.error("Error from ChatGPT:", body);
-      const exc = new Error(
-        `ChatGPT request failed: ${resp.status} ${resp.statusText}: ${body.error.message}`
-      );
-      exc.request = resp;
-      exc.errorData = body;
-      throw exc;
+    let resp;
+    while (true) {
+      resp = await fetch(url, {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${gpt4Signal.value ? gpt4Key.value || gpt3Key.value : gpt3Key.value}`,
+        },
+        body: JSON.stringify(prompt),
+      });
+      response.end = Date.now();
+      if (!resp.ok) {
+        const body = await resp.json();
+        if (body.error.code === "context_length_exceeded") {
+          const exc = new OverlengthError("Maximum length exceeded", body);
+          if (reducer) {
+            const oldPromptLength = JSON.stringify(prompt.messages).length;
+            prompt = reducer(prompt, exc);
+            const newPromptLength = JSON.stringify(prompt.messages).length;
+            console.log(`Overlength; trying again with shorter prompt ${oldPromptLength}→${newPromptLength}:`, exc.toString());
+            continue;
+          }
+        }
+        console.error("Error from ChatGPT:", body);
+        const exc = new Error(
+          `ChatGPT request failed: ${resp.status} ${resp.statusText}: ${body.error.message}`
+        );
+        exc.request = resp;
+        exc.errorData = body;
+        throw exc;
+      }
+      break;
     }
     const json = await resp.json();
     response.json = json;
     this.logs.value = [response, ...this.logs.value.slice(1)];
     console.info("Got ChatGPT response:", json, response.content);
     return response;
+  }
+
+  async embedding(string) {
+    const resp = await fetch("https://api.openai.com/v1/embeddings", {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${gpt3Key.value}`,
+      },
+      body: JSON.stringify({
+        text: string,
+        "model": "text-embedding-ada-002",
+      }),
+    });
+    const json = await resp.json();
+    return json.data[0];
   }
 
   async fixJsonWithGpt(response) {
@@ -185,3 +221,27 @@ class GPTResponse {
     return this.end - this.start;
   }
 }
+
+export class OverlengthError extends Error {
+  constructor(message, errorData) {
+    const match = errorData.error.message.match(/maximum context length is (\d+) tokens.*you requested (\d+) tokens.*?(\d+) in the messages.*?(\d+) in the completion/);
+    let lengths;
+    if (match) {
+      lengths = {
+        maxContextLength: parseInt(match[1], 10),
+        requestedLength: parseInt(match[2], 10),
+        messagesLength: parseInt(match[3], 10),
+        completionLength: parseInt(match[4], 10),
+      };
+      message = `${message} (${lengths.requestedLength}/${lengths.maxContextLength} tokens requested, ${lengths.messagesLength} input / ${lengths.completionLength} completion)`;
+    }
+    super(message);
+    this.errorData = errorData;
+    this.lengths = lengths;
+  }
+}
+
+// Example error message:
+/*
+"This model's maximum context length is 4097 tokens. However, you requested 4107 tokens (3607 in the messages, 500 in the completion). Please reduce the length of the messages or completion."
+*/
