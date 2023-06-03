@@ -45,6 +45,7 @@ export class GPT {
       prompt.temperature = temperatureSignal.value;
     }
     let resp;
+    let retryLimit = 2;
     while (true) {
       resp = await fetch(url, {
         method: "POST",
@@ -65,6 +66,14 @@ export class GPT {
             prompt = reducer(prompt, exc);
             const newPromptLength = JSON.stringify(prompt.messages).length;
             console.log(`Overlength; trying again with shorter prompt ${oldPromptLength}→${newPromptLength}:`, exc.toString());
+            continue;
+          }
+        }
+        if (resp.status == 429) {
+          // Overloaded error
+          if (retryLimit > 0) {
+            console.info("Overloaded; retrying:", body);
+            retryLimit--;
             continue;
           }
         }
