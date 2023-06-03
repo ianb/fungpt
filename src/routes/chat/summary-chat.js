@@ -20,13 +20,15 @@ const assistantDescription = persistentSignal("summary-chat.assistantDescription
 a medieval peasant. He has never left his village and know nothing of the wider world. He is very ignorant, and doesn't even know enough to know of his own ignorance. He is fearful of new things and worries about demons or other evil spirits. He speaks using simple language.
 `.trim());
 const sceneDescription = persistentSignal("summary-chat.sceneDescription", `
-# Relationship to {{userName}}
-- Not yet established
+# Core memory scenes
 
 # Factual memories
 - Not yet established
 
-# Internal dialog and emotional progression
+# Relationship to {{userName}}
+- Not yet established
+
+# Emotional progression
 - Not yet established
 
 # Scene
@@ -41,7 +43,7 @@ const SummaryChat = ({ }) => {
       title="Chat/Summary"
       start={chat}
       src="chat/summary-chat.js"
-      headerButtons={[<ImportExportPopup title={assistantName.value} appId="saves.summary-chat" signals={{ messages, summaries, userName, userDescription, assistantName, assistantDescription, descriptionLength }} />]}
+      headerButtons={[<ImportExportPopup title={assistantName.value} appId="saves.summary-chat" signals={{ messages, summaries, userName, userDescription, assistantName, assistantDescription, descriptionLength, sceneDescription }} />]}
     >
       <MessageTranscript messages={messages} userName={userName.value} assistantName={assistantName.value} />
       <div>
@@ -69,6 +71,7 @@ const ALWAYS_RETAIN = 6;
 
 async function chat() {
   let defaultValue;
+  let compressPromise;
   while (true) {
     let content = await getResult(Input, <div>
       <TextInput autoFocus="1" label="Enter a message:" placeholder="Say something" defaultValue={defaultValue} />
@@ -77,6 +80,7 @@ async function chat() {
       <Button returns={{ action: "resetDescriptions" }}>Reset descriptions</Button>
       <Button returns={{ action: "clearSummaries" }}>Clear Summaries</Button>
     </div>);
+    await compressPromise;
     if (content.action === "restart") {
       messages.value = [];
       summaries.value = [];
@@ -91,7 +95,6 @@ async function chat() {
         defaultValue = `${defaultValue} [${lastMessage.commands}]`;
       }
       messages.value = messages.value.slice(0, -1);
-      console.log("undo", messages.value.length, summaries.value, summaries.value.length && summaries.value[summaries.value.length - 1].index, summaries.value.length && summaries.value[summaries.value.length - 1].index >= messages.value.length);
       if (summaries.value.length && summaries.value[summaries.value.length - 1].index >= messages.value.length) {
         summaries.value = summaries.value.slice(0, -1);
       }
@@ -154,9 +157,9 @@ async function chat() {
           """
           `
         },
-        ...recentMessages.slice(0, -1).map(({ role, actions }) => {
+        ...recentMessages.slice(0, -1).map(({ role, actions, compressedActions }) => {
           const message = { role };
-          message.content = serializeTags(actions);
+          message.content = serializeTags(compressedActions || actions);
           message.content = message.content.slice(0, 1200);
           return message;
         }),
@@ -194,13 +197,19 @@ async function chat() {
     });
     let actions = parseTags(response.content);
     actions = trimBadDialog(dialog, userName.value, actions);
+    const prev = messages.value.filter(m => m.role === "assistant").slice(-1)[0];
     messages.value = [...messages.value, { role: "assistant", actions }];
+    if (prev && !prev.compressedActions) {
+      compressPromise = compressResponse(prev.actions, actions).then(compressedPrev => {
+        prev.compressedActions = compressedPrev;
+      });
+    }
   }
 }
 
 async function makeSummary(summary, recentMessages) {
-  const log = recentMessages.map(({ role, actions }) => {
-    return serializeTags(actions);
+  const log = recentMessages.map(({ role, actions, compressedActions }) => {
+    return serializeTags(compressedActions || actions);
   }).join("\n\n");
   const response = await gpt.chat({
     messages: [
@@ -218,23 +227,24 @@ async function makeSummary(summary, recentMessages) {
 
         Given the dialog you will update a list in this format (the list created entirely from the perspective of ${assistantName.value}):
 
+        # Core memory scenes
+        When there is an important/pivotal scene or interaction, such that the scene itself should be remembered, write a one-sentence description of the scene. Combine entries for brevity. Important scenes should be marked IMPORTANT and preserved in the rewritten list, unless it is possible to combine IMPORTANT items together into one item. Do not omit IMPORTANT items when rewriting!
+
+        # Factual memories
+        A numbered list of important objective facts, concisely expressed, that have been established in the conversation. These can be:
+        1. Established facts about ${userName.value}, especially things ${userName.value} has said
+        2. Established facts about ${assistantName.value}, including appearance and history
+        When rewriting combine entries for brevity.
+
+        Important facts should be marked IMPORTANT and preserved in the rewritten list, unless it is possible to combine IMPORTANT items together into one item. Do not omit IMPORTANT items when rewriting!
+
         # Relationship to ${userName.value}
         A numbered list of important facts, observations, opinions, feelings, or memories from the persective of ${assistantName.value} about ${userName.value}.
         Especially note:
         1. ${assistantName.value}'s feelings toward ${userName.value}
         2. ${assistantName.value}'s observations of ${userName.value}
 
-        # Core memory scenes
-        When there is an important/pivotal scene or interaction, such that the scene itself should be remembered, write a one-sentence description of the scene. Combine entries for brevity. Important scenes should be marked IMPORTANT and should be kept whenever possible, unless it is possible to combine IMPORTANT items together into one item.
-
-        # Factual memories
-        A list of important objective facts that have been established in the conversation. These can be:
-        1. Established facts about ${userName.value}
-        2. Established facts about ${assistantName.value}
-        3. Established facts about the world
-        4. Established history about ${userName.value} or ${assistantName.value}
-
-        # Internal dialog and emotional progression
+        # Emotional progression
         A chronological list of ${assistantName.value}'s most important internal thoughts and feelings. Redundant or out-of-date entries should be omitted. The list should be updated as ${assistantName.value}'s thoughts and feelings change.
 
         # Scene
@@ -277,7 +287,6 @@ function trimBadDialog(userDialog, userName, actions) {
 }
 
 function looseMatch(a, b) {
-  console.log([normalize(a), normalize(b)]);
   return normalize(a) === normalize(b);
 }
 
@@ -300,4 +309,77 @@ function reduceConversationMessages(prompt, exc) {
     return { content, ...rest };
   });
   return newPrompt;
+}
+
+async function compressResponse(currentTranscript, nextTranscript) {
+  const modifiedTranscript = [];
+  for (const item of currentTranscript) {
+    const repl = { ...item };
+    if (item.type === "decision-process" || item.type === "thoughts-and-emotions") {
+      repl.important = "?";
+    }
+    modifiedTranscript.push(repl);
+  }
+  const response = await gpt.chat({
+    messages: [
+      {
+        role: "system",
+        content: tmpl`
+        You are a conversation analyst and author. I will give you a series of passages for you to rewrite
+
+        <decision-process character="${assistantName.value}">
+        [Make this VERY concise, eliminating choices that are trivial or obvious. Fill out the important="true/false" attribute]
+        </decision-process>
+
+        <dialog character="${assistantName.value} or ${userName.value}">
+        [dialog, _action_; do NOT rewrite this]
+        </dialog>
+
+        <thoughts-and-emotions character="${assistantName.value}">
+        [Make this concise and omit any items that are repetitive or doesn't reveal anything new. Fill out the important="true/false" attribute]
+        </thoughts-and-emotions>
+
+        <description>
+        [Make this concise, removing anything that doesn't reveal new information or is repeated in other passages. KEEP a concise physical description when they describe appearance, clothing, and details of the setting]
+        </description>
+
+        ---
+
+        The transcript you will be given is followed by this transcript, which you can use to note what details are important:
+
+        \`\`\`
+        ${serializeTags(nextTranscript)}
+        \`\`\`
+        `,
+      },
+      {
+        role: "user",
+        content: tmpl`
+        Rewrite this transcript for brevity:
+
+        \`\`\`
+        ${serializeTags(modifiedTranscript)}
+        \`\`\`
+        `,
+      },
+    ],
+    temperature: 0.2,
+  });
+  let tags = response.content;
+  tags = tags.replace(/^\s*`+\s*/, "").replace(/\s*`+\s*$/, "");
+  tags = parseTags(tags);
+  const deletedTags = tags.filter(tag => tag.important === "false").map(tag => tag.type);
+  tags = tags.filter(tag => tag.important !== "false");
+  console.log("before", tags);
+  for (const tag of tags) {
+    delete tag.important;
+  }
+  console.log("after", tags);
+  if (!tags || !tags.length) {
+    return null;
+  }
+  const prevLength = serializeTags(currentTranscript).length;
+  const compressedLength = serializeTags(tags).length;
+  console.log(`Compressed transcript from ${prevLength} to ${compressedLength}: ${Math.floor(100 * compressedLength / prevLength)}% deleted ${deletedTags.length ? deletedTags.join(", ") : "nothing"}`);
+  return tags;
 }
