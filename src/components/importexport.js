@@ -13,6 +13,18 @@ export function ImportExport({ title, appId, signals }) {
     const url = URL.createObjectURL(blob);
     event.target.href = url;
   }
+  function onExportAll(event) {
+    const jsonData = {};
+    const keys = localStorageKeys(appId + ".")
+      .map(key => key.slice(appId.length + 1));
+    for (const key of keys) {
+      jsonData[key] = JSON.parse(localStorage.getItem(appId + "." + key));
+    }
+    const stringData = JSON.stringify(jsonData, null, "  ");
+    const blob = new Blob([stringData], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    event.target.href = url;
+  }
   function onFileUpload(event) {
     const file = event.target.files[0];
     const reader = new FileReader();
@@ -84,6 +96,16 @@ export function ImportExport({ title, appId, signals }) {
           ))}
       </ol>
     </> : null}
+    <a
+      class="hover:bg-blue-300 text-indigo-900 hover:underline px-1 text-xs"
+      href="#"
+      onClick={onExportAll}
+      download={`${todayString()}-${appId}.json`}
+    >
+      download all
+      <icons.Download class="h-4 w-4 inline-block ml-1" />
+    </a>
+
   </div>
 }
 
@@ -101,5 +123,14 @@ function localStorageKeys(prefix) {
       keys.push(key);
     }
   }
+  keys.sort();
   return keys;
+}
+
+function todayString() {
+  const currentDate = new Date();
+  const year = currentDate.getFullYear();
+  const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+  const day = String(currentDate.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
