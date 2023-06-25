@@ -263,3 +263,42 @@ export const ChooseMany = ({ children }) => {
     }}
   </ReturnResult.Consumer>;
 };
+
+export const Select = ({ label, signal, options, class: className }) => {
+  const optionElements = [];
+  console.log("options", options);
+  for (const op of options) {
+    let value = op;
+    let label = value;
+    if (Array.isArray(op)) {
+      value = op[0];
+      label = op[1];
+    }
+    console.log("opn", [Array.isArray(op), value, label]);
+    optionElements.push(<option value={value}>{label}</option>);
+  }
+  function onInput(event) {
+    signal.value = event.target.value;
+  }
+  const sel = (
+    <select
+      class={twMerge("border rounded p-1 border-gray-300", className)}
+      value={signal.value}
+      onInput={onInput}
+    >
+      {optionElements}
+    </select>
+  );
+  if (label) {
+    return <Label label={label}>{sel}</Label>;
+  }
+  return sel;
+};
+
+export const CheckboxLabel = ({ children, signal, class: className, ...props }) => {
+  const c = twMerge("rounded-full inline-block px-2 cursor-default mr-2", signal.value ? "bg-blue-800 text-white" : "bg-gray-300 text-gray-500", className);
+  function onClick() {
+    signal.value = !signal.value;
+  }
+  return <div class={c} onClick={onClick}>{children}</div>;
+};
