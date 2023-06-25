@@ -52,7 +52,7 @@ export function ImportExport({ title, appId, signals }) {
     for (const key in signals) {
       jsonData[key] = signals[key].value;
     }
-    const stringData = JSON.stringify(jsonData, null, "  ");
+    const stringData = JSON.stringify(jsonData);
     localStorage.setItem(appId + "." + key, stringData);
   }
   return <div>
