@@ -188,7 +188,7 @@ async function chat() {
           [Unless other instructions indicate otherwise, ${descriptionLength.value} of visual description or a description of events. Only include this tag if ${assistantName.value} performed some action or there is something notable to describe]
           </description>
 
-          [[When the reply make note of these instructions: ${commands}]]
+          [[When replying make note of these instructions: ${commands}]]
           `
         }
       ],
