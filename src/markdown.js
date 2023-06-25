@@ -84,7 +84,8 @@ export function Markdown(props) {
   if (!text) {
     return null;
   }
-  delete props.text;
-  props.class = (props.class || "") + " unreset";
-  return <div {...props}>{markdownToPreact(text)}</div>;
+  const otherProps = { ...props };
+  delete otherProps.text;
+  otherProps.class = (otherProps.class || "") + " unreset";
+  return <div {...otherProps}>{markdownToPreact(text)}</div>;
 }
