@@ -2,6 +2,7 @@
    permissive */
 
 export function parseTags(s) {
+  s = s.trim().replace(/^`+/, "").replace(/`+$/, "").trim();
   const parts = [];
   do {
     const nextMatch = s.match(/<([^/][^>]+)>/);
@@ -42,7 +43,13 @@ function parseAttrs(s) {
   const attrs = {};
   if (attrsText) {
     Array.from(attrsText.matchAll(/([^=\s]+)="([^"]*)"/g)).forEach((match) => {
-      attrs[match[1].trim()] = match[2];
+      let v = match[2];
+      if (v.startsWith("[") && v.endsWith("]")) {
+        v = JSON.parse(v);
+      } else if (v.startsWith("{") && v.endsWith("}")) {
+        v = JSON.parse(v);
+      }
+      attrs[match[1].trim()] = v;
     });
   }
   return [tag, attrs];
@@ -73,7 +80,13 @@ function serializeAttrs(attrs, omit = null) {
     if (omit && typeof omit === "string" && key === omit) {
       continue;
     }
-    result.push(` ${key}="${value}"`);
+    let v = value;
+    if (value && Array.isArray(value)) {
+      v = JSON.stringify(value);
+    } else if (value && typeof value === "object") {
+      v = JSON.stringify(value);
+    }
+    result.push(` ${key}="${v}"`);
   }
   return result.join("");
 }
