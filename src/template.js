@@ -44,7 +44,7 @@ function parseTemplate(template, props) {
     }
     return name + punctuation;
   });
-  const markdownListMatcher = /^(\s*)(\d+\.|\*|\-)\s+\.\.\.(\$\{placeholder-\d+\})/g;
+  const markdownListMatcher = /^(\s*)(\d+\.|\*|\-)\s+\.\.\.(\$\{placeholder-\d+\})/gm;
   template = template.replace(markdownListMatcher, (match, indent, bullet, name) => {
     const value = props.get(name);
     if (!value) {
@@ -68,7 +68,7 @@ function parseTemplate(template, props) {
         return indent + (num + i) + ". " + repr(v);
       }
       return indent + bullet + " " + repr(v);
-    }));
+    }).join("\n"));
     return newId;
   });
   const conditionalMatcher = /\[\[([^]*?)\]\]/g;
@@ -136,22 +136,30 @@ export function dedent(template) {
   if (template === null || template === undefined) {
     throw new Error("Template is null or undefined");
   }
-  template = template.trim();
-  let lines = template.split("\n");
-  const firstLine = lines[0];
-  lines = lines.slice(1);
+  const lines = template.split("\n");
+  let firstLine = lines[0];
+  if (firstLine.trim() === "") {
+    firstLine = "";
+  } else {
+    firstLine = `${firstLine.trimEnd()}\n`;
+  }
+  lines.shift();
+  while (lines.length && lines[0].trim() === "") {
+    lines.shift();
+  }
+  while (lines.length && lines[lines.length - 1].trim() === "") {
+    lines.pop();
+  }
   let indent = -1;
-  for (const line of lines) {
-    const trimmed = line.trimStart();
+  for (const indentLine of lines) {
+    const trimmed = indentLine.trimStart();
     if (trimmed) {
-      const newIndent = line.length - trimmed.length;
+      const newIndent = indentLine.length - trimmed.length;
       if (indent === -1 || newIndent < indent) {
         indent = newIndent;
       }
     }
   }
-  const result = lines
-    .map((line) => line.slice(indent))
-    .join("\n");
-  return firstLine + "\n" + result;
+  const result = lines.map((line) => line.slice(indent).trimEnd()).join("\n");
+  return `${firstLine}${result}`;
 }
