@@ -82,6 +82,10 @@ body {
 	font-size: 1.1em;
 }
 
+.small-sublists.unreset ul li {
+	font-size: 90%;
+}
+
 /* This keeps the top-level <p> in Markdown from adding a top/bottom margin */
 .unreset>div>p:first-child {
 	margin-top: 0;
@@ -102,6 +106,14 @@ body {
 
 .unreset pre {
 	white-space: pre-wrap;
+}
+
+.unreset.clickable ol>li {
+	cursor: default;
+
+	&:hover {
+		background-color: rgba(0, 0, 0, 0.1);
+	}
 }
 
 .unreset {
