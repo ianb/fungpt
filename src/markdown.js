@@ -84,6 +84,9 @@ export function Markdown(props) {
   if (!text) {
     return null;
   }
+  if (typeof text !== "string") {
+    console.warn("<Markdown> received non-string text:", text);
+  }
   const otherProps = { ...props };
   delete otherProps.text;
   otherProps.class = (otherProps.class || "") + " unreset";
