@@ -16,7 +16,7 @@ export const TextInput = ({ label, signal, class: className, ...props }) => {
         class={className}
         ref={inputRef}
         type="text"
-        value={signal}
+        value={signal.value}
         onInput={(event) => signal.value = event.target.value}
         {...props} />
     </Label>;
@@ -42,8 +42,11 @@ export const TextInput = ({ label, signal, class: className, ...props }) => {
 };
 
 export const SimpleTextInput = ({ class: className, ...props }) => {
-  if (!props.ref) {
+  if (!props.inputRef) {
     props.ref = useRef();
+  } else {
+    props.ref = props.inputRef;
+    delete props.inputRef;
   }
   useEffect(() => {
     if (!props.onSubmit || !props.ref.current) {
@@ -266,7 +269,6 @@ export const ChooseMany = ({ children }) => {
 
 export const Select = ({ label, signal, options, class: className }) => {
   const optionElements = [];
-  console.log("options", options);
   for (const op of options) {
     let value = op;
     let label = value;
@@ -274,7 +276,6 @@ export const Select = ({ label, signal, options, class: className }) => {
       value = op[0];
       label = op[1];
     }
-    console.log("opn", [Array.isArray(op), value, label]);
     optionElements.push(<option value={value}>{label}</option>);
   }
   function onInput(event) {
