@@ -50,13 +50,16 @@ module.exports = (config, env, helpers) => {
 };
 
 async function saveFile(req, res) {
+  if (req.body.deleteFile) {
+    return deleteFile(req, res);
+  }
   let { title, metadata, project, image } = req.body;
   const subdir = normalizeForFilename(project).slice(0, 30);
   const longTitle = normalizeForFilename(title);
   const prefix = currentDate();
   const count = await findCount(subdir, prefix);
-  const shortFilename = longTitle.slice(0, 20);
-  const fullFilename = `${prefix}-${count}-${shortFilename}`;
+  const shortFilename = longTitle.slice(0, 40);
+  const fullFilename = `${prefix}-${shortFilename}-${count}`;
   const decodedContent = Buffer.from(image, 'base64');
   await fs.promises.writeFile(path.join(IMAGE_DIR, subdir, fullFilename + ".jpg"), decodedContent);
   metadata = metadata || {};
@@ -66,8 +69,34 @@ async function saveFile(req, res) {
     url: `/images/${subdir}/${fullFilename}.jpg`,
     metadataUrl: `/images/${subdir}/${fullFilename}.json`,
     bytes: decodedContent.length,
+    fullFilename,
   });
   console.log("saved to", fullFilename,)
+}
+
+async function deleteFile(req, res) {
+  let { title, metadata, project, image, fullFilename } = req.body;
+  const subdir = normalizeForFilename(project).slice(0, 30);
+  const path1 = path.join(IMAGE_DIR, subdir, fullFilename + ".jpg");
+  const path2 = path.join(IMAGE_DIR, subdir, fullFilename + ".json");
+  let success = true;
+  try {
+    await fs.promises.unlink(path1);
+  } catch (e) {
+    console.warn("Error unlinking path", path1, e);
+    success = false;
+  }
+  try {
+    await fs.promises.unlink(path2);
+  } catch (e) {
+    console.warn("Error unlinking path", path2, e);
+    success = false;
+  }
+  res.json({
+    success,
+    fullFilename,
+  });
+  console.log("deleted", fullFilename);
 }
 
 function normalizeForFilename(string) {
@@ -95,7 +124,8 @@ async function findCount(subdir, prefix) {
   }
   const files = await fs.promises.readdir(path);
   const counts = files.filter((f) => f.startsWith(prefix)).map((f) => {
-    const n = f.slice(prefix.length + 1).split("-")[0];
+    const ns = f.slice(prefix.length + 1).split("-");
+    const n = ns[ns.length - 1];
     const nInt = parseInt(n, 10);
     if (isNaN(nInt)) {
       return 0;
