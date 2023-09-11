@@ -1,12 +1,12 @@
-let _id = 0;
+let nextId = 0;
 function nextIdentifier() {
-  _id++;
-  return "${placeholder-" + _id + "}";
+  nextId++;
+  return `\${placeholder-${nextId}}`;
 }
 
 export function tmpl(strings, ...args) {
   const props = new Map();
-  let parts = [];
+  const parts = [];
   for (let i = 0; i < strings.length - 1; i++) {
     parts.push(strings[i]);
     const id = nextIdentifier();
@@ -19,12 +19,12 @@ export function tmpl(strings, ...args) {
 }
 
 export function fillTemplate(template, evaluator) {
-  const props = new Map();
   const parts = [];
   const subs = [];
   let match;
-  let regex = /\{\{(.*?)\}\}/g;
+  const regex = /\{\{(.*?)\}\}/g;
   let pos = 0;
+  // eslint-disable-next-line no-cond-assign
   while ((match = regex.exec(template))) {
     parts.push(template.slice(pos, match.index));
     subs.push(evaluator(match[1]));
@@ -36,26 +36,25 @@ export function fillTemplate(template, evaluator) {
 
 function parseTemplate(template, props) {
   const tailingPunctuationMatcher = /(\$\{placeholder-\d+\})([.,])/g;
-  let match;
   template = template.replace(tailingPunctuationMatcher, (match, name, punctuation) => {
     const value = props.get(name);
-    if (value && typeof value === "string" && /[!;,\.\?]$/.test(value)) {
+    if (value && typeof value === "string" && /[!;,.?]$/.test(value)) {
       return name;
     }
     return name + punctuation;
   });
-  const markdownListMatcher = /^(\s*)(\d+\.|\*|\-)\s+\.\.\.(\$\{placeholder-\d+\})/gm;
+  const markdownListMatcher = /^(\s*)(\d+\.|\*|-)\s+\.\.\.(\$\{placeholder-\d+\})/gm;
   template = template.replace(markdownListMatcher, (match, indent, bullet, name) => {
     const value = props.get(name);
     if (!value) {
-      return indent + bullet + " " + "[No value]";
+      return `${indent}${bullet} [No value]`;
     }
     if (!Array.isArray(value)) {
-      return indent + bullet + " " + name + " [Not a list]";
+      return `${indent}${bullet} [Not a list]`;
     }
     const filtered = value.filter((v) => !isEmpty(v));
     if (filtered.length === 0) {
-      return indent + bullet + " " + "[No values]";
+      return `${indent}${bullet} [No values]`;
     }
     const numMatch = /^(\d)+/.exec(bullet);
     let num = -1;
@@ -63,19 +62,25 @@ function parseTemplate(template, props) {
       num = parseInt(numMatch[1], 10);
     }
     const newId = nextIdentifier();
-    props.set(newId, filtered.map((v, i) => {
-      if (num !== -1) {
-        return indent + (num + i) + ". " + repr(v);
-      }
-      return indent + bullet + " " + repr(v);
-    }).join("\n"));
+    props.set(
+      newId,
+      filtered
+        .map((v, i) => {
+          if (num !== -1) {
+            return `${indent}${num + i}. ${repr(v)}`;
+          }
+          return `${indent}${bullet} ${repr(v)}`;
+        })
+        .join("\n"),
+    );
     return newId;
   });
   const conditionalMatcher = /\[\[([^]*?)\]\]/g;
   template = template.replace(conditionalMatcher, (match, inner) => {
     let found = false;
     let hasEmpty = false;
-    const repl = inner.replace(/(\$\{placeholder-\d+\})/g, (varMatch, name) => {
+    // This really just sets found and hasEmpty:
+    inner.replace(/(\$\{placeholder-\d+\})/g, (varMatch, name) => {
       const value = props.get(name);
       if (isEmpty(value)) {
         hasEmpty = true;
@@ -94,6 +99,38 @@ function parseTemplate(template, props) {
     }
     return inner;
   });
+  const loopMatcher = /(\n\s+)?\{\[([^]*?)(\n)?\]\}/g;
+  template = template.replace(loopMatcher, (match, leading, inner, trailing) => {
+    const values = {};
+    let firstName;
+    const notLoopVariables = [];
+    // This just sets values, firstName, and notLoopVariables:
+    Array.from(inner.matchAll(/(\$\{placeholder-\d+\})/g)).forEach(([_, name]) => {
+      const value = props.get(name);
+      if (Array.isArray(value)) {
+        values[name] = value;
+        firstName = name;
+      } else {
+        notLoopVariables.push(name);
+      }
+    });
+    if (!firstName) {
+      // No list variables found
+      console.warn("No list variables found in loop", match, "not arrays:", notLoopVariables);
+      return match;
+    }
+    const number = values[firstName].length;
+    const result = [];
+    for (let i = 0; i < number; i++) {
+      const resolved = new Map(props);
+      for (const name of Object.keys(values)) {
+        resolved.set(name, values[name][i]);
+      }
+      const loopValue = substituteTemplate(inner, resolved);
+      result.push((leading || "") + loopValue + (trailing || ""));
+    }
+    return result.join("");
+  });
   return substituteTemplate(template, props);
 }
 
@@ -108,12 +145,7 @@ function substituteTemplate(template, props) {
 }
 
 export function isEmpty(v) {
-  return (
-    v === null ||
-    v === undefined ||
-    v === "" ||
-    (Array.isArray(v) && v.length === 0)
-  );
+  return v === null || v === undefined || v === "" || (Array.isArray(v) && v.length === 0);
 }
 
 export function repr(v) {
@@ -124,12 +156,12 @@ export function repr(v) {
     return v;
   }
   if (Array.isArray(v)) {
-    return v.map(x => repr(x)).join(", ");
+    return v.map((x) => repr(x)).join(", ");
   }
-  if ((v + "") === "[object Object]") {
+  if (v.toString() === "[object Object]") {
     return JSON.stringify(v);
   }
-  return v + "";
+  return v.toString();
 }
 
 export function dedent(template) {
