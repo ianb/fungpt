@@ -33,6 +33,7 @@
     "http-proxy-middleware": "^2.0.6",
     "json5": "^2.2.3",
     "just-clone": "^6.2.0",
+    "just-sort-by": "^3.2.0",
     "katex": "^0.16.6",
     "marked": "^4.3.0",
     "marked-extended-latex": "^1.1.0",
