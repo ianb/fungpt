@@ -1,8 +1,8 @@
+import { useSignal } from "@preact/signals";
 import { twMerge } from "tailwind-merge";
 import * as icons from "./icons";
 import { useEffect, useRef } from "preact/hooks";
 import { gpt4Signal, temperatureSignal } from "../gpt";
-import { useState } from "preact/hooks";
 import { hashParamsSignal, updateHashParams } from "./hash";
 import { ErrorBoundary, ErrorCatcher } from "./errorboundary";
 
@@ -23,7 +23,7 @@ export const Page = ({ title, start, children, src, headerButtons }) => {
       <ErrorCatcher />
       <main class="flex-1 flex overflow-auto bg-gray-300">
         {children.map((child) => {
-          if (child.type === FullTabs || child.type === FullTabsWrapper) {
+          if (child.type.isFullTabs) {
             return <ErrorBoundary>{child}</ErrorBoundary>;
           } else {
             return <ErrorBoundary>
@@ -81,8 +81,6 @@ export const Header = ({ title, src, buttons }) => {
           <input type="checkbox" class="ml-2" checked={gpt4Signal} onChange={(e) => gpt4Signal.value = e.target.checked} />
         </label>
         {buttons}
-        <img src="/assets/minnebar-icon.svg" class="inline-block h-4 w-4 mr-2" />
-        Minnebar 17
         {src && (
           <a href={`https://github.com/ianb/fungpt/blob/main/src/routes/${src}`} target="_blank" class="ml-2" title="View source code">
             <icons.GitHub class="h-4 w-4 inline-block text-white" />
@@ -93,59 +91,104 @@ export const Header = ({ title, src, buttons }) => {
   );
 };
 
-export const Tabs = ({ children, class: className, listClass, hashParam, listChildren, defaultSelectedIndex }) => {
+export const Tabs = ({
+  children,
+  class: className,
+  listClass,
+  hashParam,
+  listChildren,
+  defaultSelectedIndex,
+}) => {
   if (!Array.isArray(children)) {
     children = [children];
   }
+  children = children.flat().filter(x => x);
   const tabs = children.filter((child) => child.type === Tab);
   children = children.filter((child) => child.type !== Tab);
+  const selectedIndex = useSignal(defaultSelectedIndex || 0);
   if (hashParam) {
-    defaultSelectedIndex = parseInt(hashParamsSignal.value.get(hashParam), 10);
+    const i = parseInt(hashParamsSignal.value.get(hashParam), 10);
+    if (!Number.isNaN(i)) {
+      selectedIndex.value = i;
+    }
   }
-  const [selectedIndex, setSelectedIndex] = useState(defaultSelectedIndex || 0);
   function onSelect(index) {
-    setSelectedIndex(index);
+    if (tabs[index].props.disabled) {
+      return;
+    }
+    selectedIndex.value = index;
     if (hashParam) {
       updateHashParams({ [hashParam]: index });
     }
     setTimeout(() => {
       // This is to help textareas get resized when they appear after being hidden
       window.dispatchEvent(new Event("showhide"));
-    })
+    });
+  }
+  function isSelected(index) {
+    if (selectedIndex.value === -1 || selectedIndex.value >= tabs.length) {
+      return index === tabs.length - 1;
+    }
+    return index === selectedIndex.value;
   }
   return (
-    <div class="h-full w-full">
-      <ol class={twMerge("flex w-full sticky top-0 bg-gray-100", listClass)}>
-        {tabs.map((tab, index) => (
-          <li class="mr-1">
-            <button
-              class={twMerge(
-                "px-2 py-1 rounded-t-lg text-sm font-semibold",
-                index === selectedIndex ? "bg-aqua-dark text-white" : "bg-aqua-light text-gray-500"
-              )}
-              onClick={() => onSelect(index)}
-            >
-              {tab.props.title}
-            </button>
-          </li>
-        ))}
+    <div class="h-full w-full mb-2">
+      <ol class={twMerge("flex flex-wrap items-end w-full sticky top-0 bg-gray-100", listClass)}>
+        {tabs.map((tab, index) => {
+          let c = "px-2 py-1 rounded-t-lg text-sm font-semibold";
+          if (isSelected(index)) {
+            c += " bg-aqua-dark text-white";
+          } else if (tab.props.disabled) {
+            c += " bg-gray-300 text-gray-500";
+          } else {
+            c += " bg-aqua-light text-gray-500";
+          }
+          return (
+            <li class="mr-1 mt-1" key={index}>
+              <button class={c} onClick={() => onSelect(index)} disabled={tab.props.disabled}>
+                {tab.props.title}
+              </button>
+            </li>
+          );
+        })}
         {listChildren}
       </ol>
       {tabs.map((tab, index) => (
-        <div key={`${index}-${tab.props.title}`} class={twMerge("w-full overflow-scroll bg-gray-100", selectedIndex === index ? "block" : "hidden", className)}>
+        <div
+          data-is-tab
+          key={`${index}-${tab.props.title}`}
+          class={twMerge(
+            "w-full overflow-scroll bg-gray-100 border rounded-b-lg shadow-xl pb-1 px-1",
+            isSelected(index) ? "block" : "hidden",
+            className,
+          )}
+        >
           {tab}
         </div>
       ))}
       {children}
     </div>
-  )
+  );
 };
+export function isTabVisible(element) {
+  let pos = element;
+  while (pos) {
+    if (pos.hasAttribute("data-is-tab")) {
+      return !pos.classList.contains("hidden");
+    }
+    pos = pos.parentElement;
+  }
+  console.warn("Attempted to see if tab was visible but no tab found", element);
+  return true;
+}
 
 export const FullTabs = (props) => {
   return <div class="w-1/3 bg-gray-300 overflow-auto m-2 rounded-b-lg">
     <Tabs class="rounded-r-lg shadow-xl p-2" listClass="bg-gray-300" {...props} />
   </div>
 };
+
+FullTabs.isFullTabs = true;
 
 export const FullTabsWrapper = ({ children }) => {
   return <>
@@ -176,7 +219,7 @@ export const Zoomed = ({ children, onClose, class: className }) => {
     }
   }
   return <div class="absolute top-0 right-0 bottom-0 left-0 flex items-center justify-center z-10" style="background-color: rgba(0, 0, 0, 0.8)" ref={bgEl} onClick={handleClick}>
-    <div class={twMerge("h-5/6 w-5/6 m-auto bg-white rounded-lg shadow-xl overflow-auto", className)}>
+    <div class={twMerge("h-5/6 w-5/6 m-auto rounded-lg shadow-xl overflow-auto", className)}>
       {children}
     </div>
   </div>;
