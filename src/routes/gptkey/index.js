@@ -1,8 +1,34 @@
-import { gpt3Key, gpt4Key } from "../../key";
+import { useEffect } from "preact/hooks";
+import { gpt3Key, gpt4Key, endpoint, modelPrefix } from "../../key";
 import { Page } from "../../components/page";
-import { A, TextInput } from "../../components/input";
+import { A, TextInput, Button } from "../../components/input";
 
 const GptKey = () => {
+  useEffect(async () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("return") === "openrouter.ai" && params.get("code")) {
+      const code = params.get("code");
+      const resp = await fetch("https://openrouter.ai/api/v1/auth/keys", {
+        method: 'POST',
+        body: JSON.stringify({
+          code,
+        })
+      });
+      const body = await resp.json();
+      console.log("Received key from openrouter.ai:", body);
+      if (body.key) {
+        gpt3Key.value = body.key;
+        endpoint.value = "https://openrouter.ai/api/v1/chat/completions";
+        modelPrefix.value = "openai/";
+      }
+      setTimeout(() => {
+        const u = new URL(location.href);
+        u.search = "";
+        location.href = u.toString();
+      }, 500);
+    }
+  });
+  const callbackUrl = `${location.origin}${location.pathname}?return=openrouter.ai`;
   return <Page title="Set your GPT key">
     <div>
       <p class="py-1">
@@ -30,8 +56,23 @@ const GptKey = () => {
         </p>
         <TextInput signal={gpt4Key} label="GPT-4 API key" />
       </div>
+      <div>
+        <p>Finally if you want you can use <A href="openrouter.ai">openrouter.ai</A>:</p>
+        <div>
+          <a class="bg-magenta hover:bg-blue-700 text-white py-1 px-2 rounded-lg m-1" href={`https://openrouter.ai/auth?callback_url=${encodeURIComponent(callbackUrl)}`}>
+            Use openrouter.ai
+          </a>
+        </div>
+        {endpoint.value && <div>
+          <Button onClick={() => {
+            endpoint.value = null;
+            gpt3Key.value = null;
+            modelPrefix.value = "";
+          }}>Clear Openrouter.ai key</Button>
+        </div>}
+      </div>
     </div>
-  </Page>;
+  </Page >;
 };
 
 export default GptKey;

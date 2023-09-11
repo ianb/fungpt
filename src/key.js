@@ -3,6 +3,8 @@ import { Page, FreeChunk } from "./components/page";
 
 export const gpt3Key = persistentSignal("gptkey.gpt3Key", "");
 export const gpt4Key = persistentSignal("gptkey.gpt4Key", "");
+export const endpoint = persistentSignal("gptkey.endpoint", null);
+export const modelPrefix = persistentSignal("gptkey.modelPrefix", "");
 
 export const hasKey = () => {
   return !!gpt3Key.value;

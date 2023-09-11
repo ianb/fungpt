@@ -1,16 +1,24 @@
-const url = "https://api.openai.com/v1/chat/completions";
-import { gpt3Key, gpt4Key } from "./key.js";
+import { gpt3Key, gpt4Key, endpoint, modelPrefix } from "./key.js";
 import { signal } from "@preact/signals";
 import { persistentSignal } from "./persistentsignal.js";
 import * as icons from "./components/icons";
 import { H1 } from "./components/input";
 import JSON5 from "json5";
 
+const GPT_URL = "https://api.openai.com/v1/chat/completions";
+
 export const gpt4Signal = persistentSignal("gpt.gpt4Signal", false);
 export const temperatureSignal = persistentSignal("gpt.temperature", null);
 
 export const defaultChatPrompt = {
 };
+
+function getGptUrl() {
+  if (endpoint.value) {
+    return endpoint.value;
+  }
+  return GPT_URL;
+}
 
 export class GPT {
   constructor(defaultOptions) {
@@ -20,7 +28,7 @@ export class GPT {
   }
 
   async chat(prompt) {
-    prompt = Object.assign({}, defaultChatPrompt, prompt);
+    prompt = Object.assign({}, this.defaultOptions, prompt);
     let reducer;
     const response = new GPTResponse({ prompt });
     this.logs.value = [response, ...this.logs.value];
@@ -44,15 +52,20 @@ export class GPT {
     if (temperatureSignal.value !== null) {
       prompt.temperature = temperatureSignal.value;
     }
+    if (modelPrefix.value) {
+      prompt.model = modelPrefix.value + prompt.model;
+    }
     let resp;
     let retryLimit = 2;
     while (true) {
-      resp = await fetch(url, {
+      resp = await fetch(getGptUrl(), {
         method: "POST",
         mode: "cors",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${gpt4Signal.value ? gpt4Key.value || gpt3Key.value : gpt3Key.value}`,
+          "X-Title": "FunGPT",
+          "HTTP-Referer": `${location.origin}${location.pathname}`,
         },
         body: JSON.stringify(prompt),
       });
@@ -90,7 +103,7 @@ export class GPT {
     const json = await resp.json();
     response.json = json;
     this.logs.value = [response, ...this.logs.value.slice(1)];
-    console.info("Got ChatGPT response:", json, response.content);
+    console.info("Got ChatGPT response:", json, response.isFunctionCall ? response.functionCall : response.content);
     return response;
   }
 
@@ -160,14 +173,32 @@ const LogItem = ({ response, index, hasJson }) => {
         <div class={response.json ? "" : "bg-sky-200"}>
           {response.prompt.messages.map((message) => (
             <pre class="text-xs whitespace-pre-wrap pl-6 -indent-4">
-              <strong>{message.role}:</strong> {message.content}
+              <strong>
+                {message.role}
+                {message.role === "function" && message.name
+                  ? ` ${message.name}()`
+                  : ""}
+                :
+              </strong>
+              {message.function_call
+                ? `function call: ${message.function_call.name}(${formatArgs(
+                  message.function_call.arguments
+                )})`
+                : message.content}
             </pre>
           ))}
         </div>
         {response.json ? (
-          <pre class="text-xs whitespace-pre-wrap pl-6 -indent-4 bg-green-200">
-            <strong>response:</strong> {response.content}
-          </pre>
+          response.isFunctionCall ? (
+            <pre class="text-xs whitespace-pre-wrap pl-6 -intent-4 bg-green-200">
+              <strong>function call:</strong>{" "}
+              {JSON.stringify(response.functionCall, null, 2)}
+            </pre>
+          ) : (
+            <pre class="text-xs whitespace-pre-wrap pl-6 -indent-4 bg-green-200">
+              <strong>response:</strong> {response.content}
+            </pre>
+          )
         ) : null}
       </>
     ) : null}
@@ -181,18 +212,45 @@ class GPTResponse {
     this.prompt = prompt;
     this.json = json;
     this.responseNumber = responseNumber++;
+    this._parsed = undefined;
+  }
+
+  get isFunctionCall() {
+    return !!this.json.choices[0].message.function_call;
   }
 
   get content() {
-    return this.json.choices[0].message.content;
+    const m = this.json.choices[0].message;
+    if (m.function_call && !m.content) {
+      throw new Error(
+        `No content in response (function_call: ${m.function_call.name}())`
+      );
+    }
+    return m.content;
   }
 
   get nContent() {
     return this.json.choices.map((choice) => choice.message.content);
   }
 
+  get functionCall() {
+    const m = this.json.choices[0].message;
+    if (!m.function_call) {
+      throw new Error(`No function call in response`);
+    }
+    const result = { ...m.function_call };
+    try {
+      result.arguments = JSON5.parse(result.arguments);
+    } catch (e) {
+      console.warn("Could not parse function call arguments:", result.arguments);
+      throw e;
+    }
+    return result;
+  }
+
   get parsed() {
-    let content = this.content;
+    let content = this.content.trim();
+    content = content.replace(/^`+/, "").replace(/`+$/, "").trim();
     let bracket = content.indexOf("[");
     let brace = content.indexOf("{");
     if (bracket === -1) {
@@ -217,6 +275,12 @@ class GPTResponse {
     } catch (e) {
       return failureCallback(this.content);
     }
+  }
+
+  parsedWithGptFix(gpt) {
+    return this.catchParsed((content) => {
+      return gpt.fixJsonWithGpt(content);
+    });
   }
 
   get finishReason() {
@@ -254,3 +318,12 @@ export class OverlengthError extends Error {
 /*
 "This model's maximum context length is 4097 tokens. However, you requested 4107 tokens (3607 in the messages, 500 in the completion). Please reduce the length of the messages or completion."
 */
+
+function formatArgs(args) {
+  if (typeof args === "string") {
+    args = JSON.parse(args);
+  }
+  return Object.entries(args)
+    .map(([name, v]) => `${name}=${JSON.stringify(v)}`)
+    .join(" ");
+}
